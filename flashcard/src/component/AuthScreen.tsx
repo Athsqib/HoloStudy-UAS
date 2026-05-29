@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { auth, googleProvider } from "../lib/firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithRedirect } from "firebase/auth";
 import { BookOpen, LogIn, AlertCircle } from "lucide-react";
 
 export const AuthScreen = () => {
@@ -12,7 +12,7 @@ export const AuthScreen = () => {
     try {
       setIsLoading(true);
       setError("");
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to sign in with Google";

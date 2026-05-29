@@ -39,7 +39,7 @@ export const Header = ({ user, onLogoClick, onLogout }: HeaderProps) => {
           <span className="text-xs font-bold text-[#1a1a4b]">
             {user.displayName || "User"}
           </span>
-          <span className="text-[10px] text-gray-400 font-medium max-w-[120px] truncate">
+          <span className="text-[10px] text-gray-400 font-medium max-w-30 truncate">
             {user.email}
           </span>
         </div>

@@ -76,7 +76,7 @@ export const Projects = ({
               >
                 {/* Header */}
                 <div className="text-center mb-12">
-                  <div className="w-16 h-16 bg-[#edf2f7] rounded-[24px] flex items-center justify-center text-[#4d51a3] mx-auto mb-6">
+                  <div className="w-16 h-16 bg-[#edf2f7] rounded-3xl flex items-center justify-center text-[#4d51a3] mx-auto mb-6">
                     <Folder className="w-8 h-8" />
                   </div>
                   <h2 className="text-4xl font-bold text-[#1a1a4b] mb-3">
@@ -95,7 +95,7 @@ export const Projects = ({
                   {!isCreatingProject ? (
                     <button
                       onClick={() => setIsCreatingProject(true)}
-                      className="h-64 rounded-[32px] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
+                      className="h-64 rounded-4xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
                     >
                       <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
                         <Plus className="w-6 h-6" />
@@ -108,7 +108,7 @@ export const Projects = ({
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-xl h-64 flex flex-col"
+                      className="bg-white p-8 rounded-4xl border border-gray-100 shadow-xl h-64 flex flex-col"
                     >
                       <form
                         onSubmit={handleCreateProject}
@@ -151,7 +151,7 @@ export const Projects = ({
                     <div
                       key={project.id}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="bg-white p-8 rounded-[32px] border border-gray-50 shadow-sm flex flex-col h-64 group cursor-pointer hover:shadow-xl hover:shadow-blue-900/5 transition-all relative"
+                      className="bg-white p-8 rounded-4xl border border-gray-50 shadow-sm flex flex-col h-64 group cursor-pointer hover:shadow-xl hover:shadow-blue-900/5 transition-all relative"
                     >
                       <div className="flex justify-between items-start mb-6">
                         <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
@@ -241,7 +241,7 @@ export const Projects = ({
                       <div
                         key={set.id}
                         onClick={() => onOpenSet(set)}
-                        className="bg-white p-6 rounded-[32px] border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative"
+                        className="bg-white p-6 rounded-4xl border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative"
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
