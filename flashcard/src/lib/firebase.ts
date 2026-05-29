@@ -1,19 +1,24 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import firebaseConfig from "../../firebase-applet-config.json";
+
+const firebaseConfig = await fetch("/firebase-applet-config.json").then((r) =>
+  r.json(),
+);
 
 const app = initializeApp(firebaseConfig);
 
 export const db = initializeFirestore(
   app,
-  { experimentalForceLongPolling: true },
+  {},
   ((firebaseConfig as Record<string, unknown>).firestoreDatabaseId as string) ||
     "(default)",
 );
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 export const OperationType = {
   CREATE: "create",

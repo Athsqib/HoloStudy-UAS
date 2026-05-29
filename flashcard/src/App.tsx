@@ -8,7 +8,7 @@ import {
   deleteDoc,
   where,
 } from "firebase/firestore";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, getRedirectResult } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, handleFirestoreError, OperationType, auth } from "./lib/firebase";
 import { Sidebar } from "./component/Sidebar";
@@ -30,6 +30,19 @@ export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Signed in via redirect:", result.user);
+        }
+      })
+      .catch((error) => {
+        console.error("Redirect sign-in error:", error.code, error.message);
+        // Don't let this block the app — auth state listener will handle it
+      });
+  }, []);
+
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -41,7 +54,14 @@ export default function App() {
       }
       setAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    // Safety net: if auth never resolves, unblock after 5s
+    const timeout = setTimeout(() => setAuthLoading(false), 5000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
