@@ -3,15 +3,7 @@ import { initializeFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import firebaseConfig from "../../firebase-applet-config.json";
 
-const dynamicConfig = {
-  ...firebaseConfig,
-  authDomain:
-    typeof window !== "undefined"
-      ? window.location.hostname
-      : firebaseConfig.authDomain,
-};
-
-const app = initializeApp(dynamicConfig);
+const app = initializeApp(firebaseConfig);
 
 export const db = initializeFirestore(
   app,
