@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { auth, googleProvider, db } from "../lib/firebase";
 import {
-  signInWithRedirect,
+  signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInAnonymously,
@@ -40,7 +40,7 @@ export const AuthScreen = () => {
     try {
       setIsLoading(true);
       setError("");
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to sign in with Google";
