@@ -1,5 +1,6 @@
 import type { User } from "firebase/auth";
 import { LogOut } from "lucide-react";
+import { useUsername } from "../hooks/useUsername";
 
 interface HeaderProps {
   user: User;
@@ -8,6 +9,13 @@ interface HeaderProps {
 }
 
 export const Header = ({ user, onLogoClick, onLogout }: HeaderProps) => {
+  const { username } = useUsername(user);
+
+  const displayTitle =
+    username || user.displayName || (user.isAnonymous ? "Guest User" : "User");
+  const displayInitial = displayTitle.charAt(0).toUpperCase();
+  const displaySubtitle = user.isAnonymous ? "Temporary Account" : user.email;
+
   return (
     <header className="h-16 bg-white flex items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-50">
       {/* App Logo/Brand */}
@@ -25,22 +33,22 @@ export const Header = ({ user, onLogoClick, onLogout }: HeaderProps) => {
         {user.photoURL ? (
           <img
             src={user.photoURL}
-            alt={user.displayName || "User profile"}
+            alt={displayTitle}
             className="w-8 h-8 rounded-full border border-gray-100"
             referrerPolicy="no-referrer"
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-indigo-50 text-[#6c7df3] flex items-center justify-center font-bold text-xs">
-            {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
+            {displayInitial}
           </div>
         )}
 
         <div className="hidden sm:flex flex-col text-left">
           <span className="text-xs font-bold text-[#1a1a4b]">
-            {user.displayName || "User"}
+            {displayTitle}
           </span>
           <span className="text-[10px] text-gray-400 font-medium max-w-30 truncate">
-            {user.email}
+            {displaySubtitle}
           </span>
         </div>
 

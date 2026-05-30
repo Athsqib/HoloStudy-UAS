@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { auth, googleProvider } from "../lib/firebase";
+import { auth, googleProvider, db } from "../lib/firebase";
 import {
   signInWithRedirect,
   signInWithEmailAndPassword,
@@ -8,21 +8,32 @@ import {
   signInAnonymously,
 } from "firebase/auth";
 import {
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  doc,
+} from "firebase/firestore";
+import {
   BookOpen,
   LogIn,
   AlertCircle,
   Mail,
   Lock,
   UserCircle,
+  User,
 } from "lucide-react";
 
 export const AuthScreen = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // New state for manual login
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [email, setEmail] = useState("");
+
+  // Form States
+  const [identifier, setIdentifier] = useState(""); // Used for Login (Username or Email)
+  const [username, setUsername] = useState(""); // Used for Sign Up
+  const [email, setEmail] = useState(""); // Used for Sign Up
   const [password, setPassword] = useState("");
 
   const handleGoogleSignIn = async () => {
@@ -38,40 +49,6 @@ export const AuthScreen = () => {
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError("");
-      if (isLoginMode) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
-    } catch (error: unknown) {
-      console.error("Auth error:", error);
-
-      // Safely tell TypeScript this error object might have Firebase properties
-      const err = error as { code?: string; message?: string };
-
-      if (err.code === "auth/invalid-credential") {
-        setError("Wrong email or password.");
-      } else if (err.code === "auth/email-already-in-use") {
-        setError("An account already exists with this email.");
-      } else if (err.code === "auth/weak-password") {
-        setError("Password should be at least 6 characters.");
-      } else {
-        setError(err.message || "Failed to authenticate.");
-      }
-      setIsLoading(false);
-    }
-  };
-
   const handleGuestSignIn = async () => {
     try {
       setIsLoading(true);
@@ -81,6 +58,93 @@ export const AuthScreen = () => {
       console.error("Guest Auth error:", error);
       const err = error as { message?: string };
       setError(err.message || "Failed to sign in as guest");
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      if (isLoginMode) {
+        // --- LOG IN FLOW ---
+        if (!identifier || !password) {
+          throw new Error("Please fill in all fields");
+        }
+
+        let loginEmail = identifier.trim();
+
+        if (!loginEmail.includes("@")) {
+          const usersRef = collection(db, "users");
+          const q = query(
+            usersRef,
+            where("username", "==", loginEmail.toLowerCase()),
+          );
+          const querySnapshot = await getDocs(q);
+
+          if (querySnapshot.empty) {
+            throw new Error("Username not found");
+          }
+          loginEmail = querySnapshot.docs[0].data().email;
+        }
+
+        await signInWithEmailAndPassword(auth, loginEmail, password);
+      } else {
+        // --- SIGN UP FLOW ---
+        if (!username || !email || !password) {
+          throw new Error("Please fill in all fields");
+        }
+
+        const safeUsername = username.trim().toLowerCase();
+        if (safeUsername.includes(" ")) {
+          throw new Error("Usernames cannot contain spaces");
+        }
+
+        // Check if username exists
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", safeUsername));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          throw new Error("That username is already taken");
+        }
+
+        // Create Auth user
+        const userCred = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password,
+        );
+
+        // Save custom username to Firestore
+        await setDoc(doc(db, "users", userCred.user.uid), {
+          username: safeUsername,
+          email: email.toLowerCase(),
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Auth error:", error);
+      const err = error as { code?: string; message?: string };
+
+      if (
+        err.message === "Please fill in all fields" ||
+        err.message === "Username not found" ||
+        err.message === "That username is already taken" ||
+        err.message === "Usernames cannot contain spaces"
+      ) {
+        setError(err.message);
+      } else if (err.code === "auth/invalid-credential") {
+        setError("Wrong email/username or password.");
+      } else if (err.code === "auth/email-already-in-use") {
+        setError("An account already exists with this email.");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password should be at least 6 characters.");
+      } else {
+        setError(err.message || "Failed to authenticate.");
+      }
       setIsLoading(false);
     }
   };
@@ -110,19 +174,43 @@ export const AuthScreen = () => {
           </div>
         )}
 
-        {/* --- MANUAL EMAIL FORM --- */}
         <form onSubmit={handleEmailAuth} className="flex flex-col gap-4 mb-6">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
-              required
-            />
-          </div>
+          {isLoginMode ? (
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Username or Email"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Choose a Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+                />
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+                />
+              </div>
+            </>
+          )}
+
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -131,7 +219,6 @@ export const AuthScreen = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
-              required
             />
           </div>
 
@@ -150,11 +237,14 @@ export const AuthScreen = () => {
           </button>
         </form>
 
-        {/* Toggle between Login and Sign up */}
         <button
           onClick={() => {
             setIsLoginMode(!isLoginMode);
             setError("");
+            setIdentifier("");
+            setUsername("");
+            setEmail("");
+            setPassword("");
           }}
           type="button"
           className="text-[#6c7df3] font-semibold text-sm mb-6 hover:underline focus:outline-none"
@@ -164,32 +254,33 @@ export const AuthScreen = () => {
             : "Already have an account? Sign in"}
         </button>
 
-        {/* Divider */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-gray-100"></div>
           <span className="text-gray-400 text-sm font-medium">OR</span>
           <div className="flex-1 h-px bg-gray-100"></div>
         </div>
 
-        {/* --- GOOGLE BUTTON --- */}
-        <button
-          onClick={handleGoogleSignIn}
-          type="button"
-          disabled={isLoading}
-          className="w-full py-4 px-6 bg-white border-2 border-gray-100 hover:bg-gray-50 text-gray-700 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
-        >
-          <LogIn className="w-5 h-5 text-gray-500" />
-          Continue with Google
-        </button>
-        <button
-          onClick={handleGuestSignIn}
-          type="button"
-          disabled={isLoading}
-          className="w-full py-4 px-6 bg-gray-50 border-2 border-transparent hover:bg-gray-100 text-gray-600 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
-        >
-          <UserCircle className="w-5 h-5 text-gray-400" />
-          Continue as Guest
-        </button>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleGoogleSignIn}
+            type="button"
+            disabled={isLoading}
+            className="w-full py-4 px-6 bg-white border-2 border-gray-100 hover:bg-gray-50 text-gray-700 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          >
+            <LogIn className="w-5 h-5 text-gray-500" />
+            Continue with Google
+          </button>
+
+          <button
+            onClick={handleGuestSignIn}
+            type="button"
+            disabled={isLoading}
+            className="w-full py-4 px-6 bg-gray-50 border-2 border-transparent hover:bg-gray-100 text-gray-600 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+          >
+            <UserCircle className="w-5 h-5 text-gray-400" />
+            Continue as Guest
+          </button>
+        </div>
       </motion.div>
     </div>
   );

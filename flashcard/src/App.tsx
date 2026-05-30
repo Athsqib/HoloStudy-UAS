@@ -22,8 +22,7 @@ import type { FlashcardSet, Project } from "./types";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
@@ -39,7 +38,6 @@ export default function App() {
       })
       .catch((error) => {
         console.error("Redirect sign-in error:", error.code, error.message);
-        // Don't let this block the app — auth state listener will handle it
       });
   }, []);
 
@@ -47,21 +45,19 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
+      // If they log out, immediately clear their data from the screen
       if (!currentUser) {
         setFlashcardSets([]);
         setProjects([]);
         setDataLoading(false);
       }
-      setAuthLoading(false);
+
+      // Stop the global loading spinner
+      setIsCheckingAuth(false);
     });
 
-    // Safety net: if auth never resolves, unblock after 5s
-    const timeout = setTimeout(() => setAuthLoading(false), 5000);
-
-    return () => {
-      unsubscribe();
-      clearTimeout(timeout);
-    };
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -97,7 +93,7 @@ export default function App() {
 
     const q = query(
       collection(db, "projects"),
-      where("userId", "==", user.uid), // Only fetch this user's projects
+      where("userId", "==", user.uid),
     );
 
     const unsubscribe = onSnapshot(q, {
@@ -181,7 +177,7 @@ export default function App() {
     setActiveTab("create");
   };
 
-  if (authLoading) {
+  if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-gray-200 border-t-[#6c7df3] rounded-full animate-spin" />
@@ -192,6 +188,7 @@ export default function App() {
   if (!user) {
     return <AuthScreen />;
   }
+
   if (dataLoading) {
     return (
       <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
@@ -203,7 +200,13 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard sets={flashcardSets} onOpenSet={handleOpenSet} />;
+        return (
+          <Dashboard
+            user={user}
+            sets={flashcardSets}
+            onOpenSet={handleOpenSet}
+          />
+        );
       case "projects":
         return (
           <Projects
@@ -238,7 +241,13 @@ export default function App() {
           />
         );
       default:
-        return <Dashboard sets={flashcardSets} onOpenSet={handleOpenSet} />;
+        return (
+          <Dashboard
+            user={user}
+            sets={flashcardSets}
+            onOpenSet={handleOpenSet}
+          />
+        );
     }
   };
 

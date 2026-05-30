@@ -1,14 +1,26 @@
 import { motion } from "framer-motion";
 import { Zap, BookOpen, ArrowRight } from "lucide-react";
 import type { FlashcardSet } from "../types";
+import { useUsername } from "../hooks/useUsername";
+import type { User } from "firebase/auth";
 
 export const Dashboard = ({
+  user,
   sets,
   onOpenSet,
 }: {
+  user: User | null;
   sets: FlashcardSet[];
   onOpenSet: (set: FlashcardSet) => void;
 }) => {
+  const { username, isLoading } = useUsername(user);
+
+  const displayName = isLoading
+    ? "..."
+    : username ||
+      user?.displayName?.split(" ")[0] ||
+      (user?.isAnonymous ? "Guest" : "Student");
+
   return (
     <div className="h-[calc(100vh-64px)] w-full p-4 lg:p-6 overflow-hidden">
       {/* The Big Box Background - Handles internal scrolling to keep rounded corners fixed */}
@@ -21,7 +33,7 @@ export const Dashboard = ({
           {/* Welcome Header */}
           <div className="mb-10">
             <h2 className="text-3xl font-bold text-[#2d2d66] mb-2 font-display">
-              Welcome Back, Alex
+              Welcome back, {displayName}
             </h2>
             <p className="text-gray-500 font-medium">
               You've mastered{" "}
@@ -33,7 +45,7 @@ export const Dashboard = ({
           {/* Status Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
             {/* Main Featured Card */}
-            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-[32px] p-10 relative overflow-hidden flex flex-col justify-between min-h-[320px] group transition-all hover:shadow-xl hover:shadow-blue-900/5">
+            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-4xl p-10 relative overflow-hidden flex flex-col justify-between min-h-80 group transition-all hover:shadow-xl hover:shadow-blue-900/5">
               <div className="relative z-10">
                 <span className="inline-block px-4 py-1 bg-[#c5c8f2] text-[#4d51a3] text-[10px] font-bold uppercase tracking-wider rounded-full mb-6">
                   {sets[0]?.title ? "Current Goal" : "Daily Goal"}
@@ -55,7 +67,7 @@ export const Dashboard = ({
             </div>
 
             {/* Streak Card */}
-            <div className="bg-[#e9e9ff] rounded-[32px] p-8 flex flex-col justify-between shadow-sm border border-white/50 transition-all hover:shadow-xl hover:shadow-indigo-900/5">
+            <div className="bg-[#e9e9ff] rounded-4xl p-8 flex flex-col justify-between shadow-sm border border-white/50 transition-all hover:shadow-xl hover:shadow-indigo-900/5">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-[#c5c8f2] flex items-center justify-center text-[#4d51a3] mb-6 shadow-sm">
                   <Zap className="w-6 h-6 fill-[#4d51a3]" />
@@ -107,7 +119,7 @@ export const Dashboard = ({
                   <div
                     key={set.id}
                     onClick={() => onOpenSet(set)}
-                    className="bg-[#fafbfc] p-6 rounded-[32px] border border-gray-50 hover:bg-white hover:shadow-xl hover:shadow-gray-900/5 transition-all cursor-pointer group"
+                    className="bg-[#fafbfc] p-6 rounded-4xl border border-gray-50 hover:bg-white hover:shadow-xl hover:shadow-gray-900/5 transition-all cursor-pointer group"
                   >
                     <div className="w-10 h-10 rounded-xl bg-white text-indigo-400 flex items-center justify-center mb-4 shadow-sm group-hover:bg-indigo-50 transition-colors">
                       <BookOpen className="w-5 h-5" />
