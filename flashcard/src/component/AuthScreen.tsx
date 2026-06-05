@@ -31,9 +31,9 @@ export const AuthScreen = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   // Form States
-  const [identifier, setIdentifier] = useState(""); // Used for Login (Username or Email)
-  const [username, setUsername] = useState(""); // Used for Sign Up
-  const [email, setEmail] = useState(""); // Used for Sign Up
+  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleGoogleSignIn = async () => {

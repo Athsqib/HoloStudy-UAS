@@ -26,3 +26,5 @@ dist-ssr
 !.env.local
 
 firebase-applet-config.json
+
+flashcard/README.md

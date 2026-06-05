@@ -8,6 +8,13 @@ import {
   deleteDoc,
   where,
 } from "firebase/firestore";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, handleFirestoreError, OperationType, auth } from "./lib/firebase";
@@ -21,9 +28,10 @@ import { AuthScreen } from "./component/AuthScreen";
 import type { FlashcardSet, Project } from "./types";
 
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [activeTab, setActiveTab] = useState("dashboard");
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -107,7 +115,7 @@ export default function App() {
       const setToSave = { ...set, userId: user.uid };
       await setDoc(doc(db, "flashcardSets", set.id), setToSave);
       setEditingSet(null);
-      setActiveTab("library");
+      navigate("/library");
     } catch (err) {
       handleFirestoreError(
         err,
@@ -133,7 +141,7 @@ export default function App() {
 
   const handleOpenSet = (set: FlashcardSet) => {
     setEditingSet(set);
-    setActiveTab("create");
+    navigate("/create");
   };
 
   const handleDeleteSet = async (setId: string) => {
@@ -162,7 +170,7 @@ export default function App() {
 
   const navigateToCreate = () => {
     setEditingSet(null);
-    setActiveTab("create");
+    navigate("/create");
   };
 
   if (isCheckingAuth) {
@@ -173,92 +181,129 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return <AuthScreen />;
-  }
-
-  if (dataLoading) {
-    return (
-      <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const currentTab = location.pathname.replace("/", "") || "dashboard";
 
   const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <Dashboard
-            user={user}
-            sets={flashcardSets}
-            onOpenSet={handleOpenSet}
-          />
-        );
-      case "projects":
-        return (
-          <Projects
-            projects={projects}
-            sets={flashcardSets}
-            onSaveProject={handleSaveProject}
-            onOpenSet={handleOpenSet}
-            onDeleteProject={handleDeleteProject}
-            onDeleteSet={handleDeleteSet}
-          />
-        );
-      case "library":
-        return (
-          <Library
-            sets={flashcardSets}
-            projects={projects}
-            onCreateFirst={navigateToCreate}
-            onOpenSet={handleOpenSet}
-            onDeleteSet={handleDeleteSet}
-          />
-        );
-      case "create":
-        return (
-          <CreateFlashcard
-            initialSet={editingSet}
-            projects={projects}
-            onSave={handleSaveSet}
-            onDiscard={() => {
-              setEditingSet(null);
-              setActiveTab("library");
-            }}
-          />
-        );
-      default:
-        return (
-          <Dashboard
-            user={user}
-            sets={flashcardSets}
-            onOpenSet={handleOpenSet}
-          />
-        );
-    }
+    return (
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Dashboard
+              user={user}
+              sets={flashcardSets}
+              onOpenSet={handleOpenSet}
+            />
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <Dashboard
+              user={user}
+              sets={flashcardSets}
+              onOpenSet={handleOpenSet}
+            />
+          }
+        />
+
+        <Route
+          path="/projects"
+          element={
+            <Projects
+              projects={projects}
+              sets={flashcardSets}
+              onSaveProject={handleSaveProject}
+              onOpenSet={handleOpenSet}
+              onDeleteProject={handleDeleteProject}
+              onDeleteSet={handleDeleteSet}
+            />
+          }
+        />
+
+        <Route
+          path="/library"
+          element={
+            <Library
+              sets={flashcardSets}
+              projects={projects}
+              onCreateFirst={navigateToCreate}
+              onOpenSet={handleOpenSet}
+              onDeleteSet={handleDeleteSet}
+            />
+          }
+        />
+
+        <Route
+          path="/create"
+          element={
+            <CreateFlashcard
+              initialSet={editingSet}
+              projects={projects}
+              onSave={handleSaveSet}
+              onDiscard={() => {
+                setEditingSet(null);
+                navigate("/library");
+              }}
+            />
+          }
+        />
+
+        {/* Fallback route */}
+        <Route
+          path="*"
+          element={
+            <Dashboard
+              user={user}
+              sets={flashcardSets}
+              onOpenSet={handleOpenSet}
+            />
+          }
+        />
+      </Routes>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[#fafbfc] font-sans text-[#2d2d66] flex">
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          if (tab === "create") {
-            setEditingSet(null);
-          }
-          setActiveTab(tab);
-        }}
+    <Routes>
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/dashboard" /> : <AuthScreen />}
       />
-      <div className="flex-1 ml-21">
-        {/* Pass user info and logout function to Header if you want to display it */}
-        <Header
-          user={user}
-          onLogoClick={() => setActiveTab("dashboard")}
-          onLogout={handleLogout}
-        />
-        <main>{renderContent()}</main>
-      </div>
-    </div>
+      <Route
+        path="*"
+        element={
+          !user ? (
+            // If not logged in, kick them back to login
+            <Navigate to="/login" />
+          ) : dataLoading ? (
+            // Spinner Indicator
+            <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="min-h-screen bg-[#fafbfc] font-sans text-[#2d2d66] flex">
+              <Sidebar
+                activeTab={currentTab}
+                onTabChange={(tab) => {
+                  if (tab === "create") {
+                    setEditingSet(null);
+                  }
+                  navigate(`/${tab}`);
+                }}
+              />
+              <div className="flex-1 ml-21">
+                <Header
+                  user={user}
+                  onLogoClick={() => navigate("/dashboard")}
+                  onLogout={handleLogout}
+                />
+                <main>{renderContent()}</main>
+              </div>
+            </div>
+          )
+        }
+      />
+    </Routes>
   );
 }
