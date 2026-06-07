@@ -40,15 +40,24 @@ const SidebarItem = ({
 export const Sidebar = ({
   activeTab,
   onTabChange,
+  isOpen,
+  onToggle,
 }: {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }) => {
   return (
-    <aside className="w-21 h-screen bg-white border-r border-gray-100 flex flex-col items-center fixed left-0 top-0 z-50">
+    <aside
+      className={`w-20 h-screen bg-white border-r border-gray-100 flex flex-col items-center fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="w-full flex flex-col items-center py-4 mb-4">
+        {/* Changed onClick from onTabChange to onToggle */}
         <button
-          onClick={() => onTabChange("dashboard")}
+          onClick={onToggle}
           className="flex items-center justify-center p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors"
         >
           <Menu className="w-6 h-6" strokeWidth={1.5} />

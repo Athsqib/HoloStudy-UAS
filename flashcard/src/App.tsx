@@ -31,6 +31,7 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [editingSet, setEditingSet] = useState<FlashcardSet | null>(null);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
@@ -282,7 +283,7 @@ export default function App() {
               <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <div className="min-h-screen bg-[#fafbfc] font-sans text-[#2d2d66] flex">
+            <div className="min-h-screen bg-[#fafbfc] font-sans text-[#2d2d66] overflow-x-hidden">
               <Sidebar
                 activeTab={currentTab}
                 onTabChange={(tab) => {
@@ -291,12 +292,20 @@ export default function App() {
                   }
                   navigate(`/${tab}`);
                 }}
+                isOpen={isSidebarOpen}
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
               />
-              <div className="flex-1 ml-21">
+              <div
+                className={
+                  "transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-20' : 'ml-0'}"
+                }
+              >
                 <Header
                   user={user}
                   onLogoClick={() => navigate("/dashboard")}
                   onLogout={handleLogout}
+                  isSidebarOpen={isSidebarOpen}
+                  onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                 />
                 <main>{renderContent()}</main>
               </div>

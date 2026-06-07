@@ -1,14 +1,22 @@
 import type { User } from "firebase/auth";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useUsername } from "../hooks/useUsername";
 
 interface HeaderProps {
   user: User;
   onLogoClick?: () => void;
   onLogout?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export const Header = ({ user, onLogoClick, onLogout }: HeaderProps) => {
+export const Header = ({
+  user,
+  onLogoClick,
+  onLogout,
+  isSidebarOpen,
+  onToggleSidebar,
+}: HeaderProps) => {
   const { username } = useUsername(user);
 
   const displayTitle =
@@ -18,14 +26,24 @@ export const Header = ({ user, onLogoClick, onLogout }: HeaderProps) => {
 
   return (
     <header className="h-16 bg-white flex items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-50">
-      {/* App Logo/Brand */}
-      <div
-        className="flex items-center cursor-pointer group"
-        onClick={onLogoClick}
-      >
-        <h1 className="text-[#2d2d66] font-semibold text-xl tracking-tight group-hover:text-[#6c7df3] transition-colors">
-          HoloStudy
-        </h1>
+      {/* ADDED: Menu Icon (shows only when sidebar is closed) + Logo */}
+      <div className="flex items-center gap-4">
+        {!isSidebarOpen && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1 -ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Menu className="w-6 h-6" strokeWidth={1.5} />
+          </button>
+        )}
+        <div
+          className="flex items-center cursor-pointer group"
+          onClick={onLogoClick}
+        >
+          <h1 className="text-[#2d2d66] font-semibold text-xl tracking-tight group-hover:text-[#6c7df3] transition-colors">
+            HoloStudy
+          </h1>
+        </div>
       </div>
 
       {/* User Profile & Sign Out Actions */}
