@@ -25,7 +25,7 @@ export const Header = ({
   const displaySubtitle = user.isAnonymous ? "Temporary Account" : user.email;
 
   return (
-    <header className="h-16 bg-white flex items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-50">
+    <header className="h-18 bg-white flex items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-50">
       {/* ADDED: Menu Icon (shows only when sidebar is closed) + Logo */}
       <div className="flex items-center gap-4">
         {!isSidebarOpen && (
