@@ -13,3 +13,19 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+* {
+  cursor: default;
+}
+
+input:not([readonly]):not(:disabled),
+textarea:not([readonly]):not(:disabled) {
+  cursor: text;
+}
+
+button,
+a,
+select,
+[role="button"] {
+  cursor: pointer;
+}

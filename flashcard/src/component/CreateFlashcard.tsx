@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trash2, Plus } from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
+import { EditableInput } from "./EditableInput";
+import { EditableTextarea } from "./EditableTextArea";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -48,7 +50,7 @@ export const CreateFlashcard = ({
       description,
       cards: validCards,
       createdAt: initialSet?.createdAt || new Date().toISOString(),
-      projectId: selectedProjectId || undefined,
+      projectId: selectedProjectId || "",
     };
     onSave(newSet);
   };
@@ -64,7 +66,7 @@ export const CreateFlashcard = ({
           {/* Header Navigation */}
           <button
             onClick={onDiscard}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#656799] transition-colors mb-6"
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#656799] transition-colors mb-6 hover:underline"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Sets
@@ -101,9 +103,10 @@ export const CreateFlashcard = ({
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
                 Set Title
               </label>
-              <input
+              <EditableInput
                 type="text"
                 value={title}
+                isEditable={true}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
@@ -129,9 +132,10 @@ export const CreateFlashcard = ({
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
                 Description
               </label>
-              <input
+              <EditableInput
                 type="text"
                 value={description}
+                isEditable={true}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add a short summary..."
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
@@ -165,9 +169,10 @@ export const CreateFlashcard = ({
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       Front
                     </label>
-                    <textarea
+                    <EditableTextarea
                       placeholder="Enter question or term..."
                       value={card.front}
+                      isEditable={true}
                       onChange={(e) =>
                         updateCard(card.id, "front", e.target.value)
                       }
@@ -178,9 +183,10 @@ export const CreateFlashcard = ({
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       Back
                     </label>
-                    <textarea
+                    <EditableTextarea
                       placeholder="Enter answer or definition..."
                       value={card.back}
+                      isEditable={true}
                       onChange={(e) =>
                         updateCard(card.id, "back", e.target.value)
                       }
