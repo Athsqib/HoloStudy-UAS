@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Trash2, Plus } from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
-import { EditableTextarea } from "./EditableTextArea";
+import { EditableTextarea } from "./EditableTextarea";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -108,6 +108,7 @@ export const CreateFlashcard = ({
                 value={title}
                 isEditable={true}
                 onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter set title..."
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
             </div>
@@ -120,7 +121,7 @@ export const CreateFlashcard = ({
                 onChange={(e) => setSelectedProjectId(e.target.value)}
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm appearance-none"
               >
-                <option value="">No Project</option>
+                <option value="">Uncategorized</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title}
@@ -176,10 +177,10 @@ export const CreateFlashcard = ({
                       onChange={(e) =>
                         updateCard(card.id, "front", e.target.value)
                       }
-                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-0"
+                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
                     />
                   </div>
-                  <div className="space-y-3 border-l border-gray-50 md:pl-12">
+                  <div className="space-y-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       Back
                     </label>
@@ -190,7 +191,7 @@ export const CreateFlashcard = ({
                       onChange={(e) =>
                         updateCard(card.id, "back", e.target.value)
                       }
-                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-base font-medium text-gray-600 placeholder-gray-200 resize-none p-0"
+                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
                     />
                   </div>
                 </div>

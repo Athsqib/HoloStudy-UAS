@@ -204,6 +204,7 @@ export default function App() {
               user={user}
               sets={flashcardSets}
               onOpenSet={handleOpenSet}
+              onViewAll={() => navigate("/library")}
             />
           }
         />

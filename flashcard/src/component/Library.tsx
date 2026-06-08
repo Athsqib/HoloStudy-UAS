@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, BookOpen, Clock, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  Clock,
+  MoreVertical,
+  Trash2,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import type { FlashcardSet, Project } from "../types";
 
 interface LibraryProps {
@@ -19,6 +27,7 @@ export const Library = ({
   onDeleteSet,
 }: LibraryProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredSets = sets.filter(
     (set) =>
@@ -76,86 +85,42 @@ export const Library = ({
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full max-w-2xl mb-12">
-            <input
-              type="text"
-              placeholder="Search flashcard sets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-6 py-4 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-[#7b81ff]/20 focus:border-[#7b81ff] outline-none shadow-sm text-gray-600 font-medium"
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+          <div className="w-full max-w-3xl mb-12 flex flex-col sm:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="relative w-full flex-1 h-14">
+              <input
+                type="text"
+                placeholder="Search flashcard sets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-6 py-4 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-[#7b81ff]/20 focus:border-[#7b81ff] outline-none shadow-sm text-gray-600 font-medium"
+              />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+            </div>
+            <div className="flex bg-white border border-gray-200 rounded-full p-1.5 shadow-sm shrink-0">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2.5 rounded-full transition-all ${viewMode === "grid" ? "bg-[#6c7df3]/10 text-[#6c7df3]" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"}`}
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2.5 rounded-full transition-all ${viewMode === "list" ? "bg-[#6c7df3]/10 text-[#6c7df3]" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"}`}
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {sets.length > 0 ? (
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-              <AnimatePresence>
-                {filteredSets.map((set) => (
-                  <motion.div
-                    key={set.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    onClick={() => onOpenSet(set)}
-                    className="bg-white p-6 rounded-[32px] border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                      <div className="relative group/menu">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
-                        >
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-                        <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteSet(set.id);
-                            }}
-                            className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete Set
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
-                      {set.title}
-                    </h3>
-                    <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
-                      {set.description}
-                    </p>
-
-                    {set.projectId && (
-                      <div className="mb-4">
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider">
-                          {projects.find((p) => p.id === set.projectId)
-                            ?.title || "Unknown Project"}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                        <Clock className="w-4 h-4" />
-                        <span>{set.cards.length} Cards</span>
-                      </div>
-                      <span className="text-[#6c7df3] font-bold text-sm hover:underline">
-                        Open Set
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+            <div
+              className={`w-full ${
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 gap-6"
+                  : "flex flex-col gap-4 max-w-3xl"
+              } pb-20`}
+            >
               <div
                 onClick={onCreateFirst}
                 className="border-2 border-dashed border-gray-100 rounded-[32px] p-6 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] transition-all cursor-pointer group"
@@ -167,6 +132,140 @@ export const Library = ({
                   Create New Set
                 </span>
               </div>
+
+              <AnimatePresence>
+                {filteredSets.map((set) => (
+                  <motion.div
+                    key={set.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => onOpenSet(set)}
+                    className={`bg-white rounded-[32px] border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative
+                    ${
+                      viewMode === "grid"
+                        ? "p-6 flex flex-col h-full overflow-hidden"
+                        : "p-4 pr-6 flex flex-row items-center gap-6"
+                    }
+                    `}
+                  >
+                    {viewMode === "grid" ? (
+                      /* ----------- GRID VIEW ----------- */
+                      <>
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                            <BookOpen className="w-6 h-6" />
+                          </div>
+                          <div className="relative group/menu">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteSet(set.id);
+                                }}
+                                className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Delete Set
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
+                          {set.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
+                          {set.description}
+                        </p>
+
+                        {set.projectId && (
+                          <div className="mb-4">
+                            <span className="px-2 py-0.5 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider">
+                              {projects.find((p) => p.id === set.projectId)
+                                ?.title || "Unknown Project"}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                            <Clock className="w-4 h-4" />
+                            <span>{set.cards.length} Cards</span>
+                          </div>
+                          <span className="text-[#6c7df3] font-bold text-sm hover:underline">
+                            Open Set
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      /* ----------- LIST VIEW ----------- */
+                      <>
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                          <BookOpen className="w-6 h-6" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-3 mb-1">
+                            <h3 className="text-lg font-bold text-[#1a1a4b] truncate max-w-full">
+                              {set.title}
+                            </h3>
+                            {set.projectId && (
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-500 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 mt-1 sm:mt-0">
+                                {projects.find((p) => p.id === set.projectId)
+                                  ?.title || "Unknown"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-400 font-medium truncate">
+                            {set.description}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-6 shrink-0 ml-auto">
+                          <div className="items-center gap-2 text-xs font-bold text-gray-400 hidden sm:flex">
+                            <Clock className="w-4 h-4" />
+                            <span>{set.cards.length} Cards</span>
+                          </div>
+                          <span className="text-[#6c7df3] font-bold text-sm hover:underline hidden sm:block">
+                            Open Set
+                          </span>
+
+                          <div className="relative group/menu">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteSet(set.id);
+                                }}
+                                className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Delete Set
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             /* Empty State */

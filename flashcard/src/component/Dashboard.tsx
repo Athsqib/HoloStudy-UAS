@@ -8,10 +8,12 @@ export const Dashboard = ({
   user,
   sets,
   onOpenSet,
+  onViewAll,
 }: {
   user: User | null;
   sets: FlashcardSet[];
   onOpenSet: (set: FlashcardSet) => void;
+  onViewAll?: () => void;
 }) => {
   const { username, isLoading } = useUsername(user);
 
@@ -108,7 +110,10 @@ export const Dashboard = ({
               <h3 className="text-2xl font-bold text-[#2d2d66]">
                 Recently Added Sets
               </h3>
-              <button className="text-[#6c7df3] font-bold text-sm hover:underline flex items-center gap-2">
+              <button
+                onClick={onViewAll}
+                className="text-[#6c7df3] font-bold text-sm hover:underline flex items-center gap-2"
+              >
                 View All <ArrowRight className="w-4 h-4" />
               </button>
             </div>
