@@ -23,3 +23,10 @@ export interface Project {
   color?: string;
   userId?: string;
 }
+
+export type FlexibleCard = {
+  front?: string;
+  term?: string;
+  back?: string;
+  definition?: string;
+};

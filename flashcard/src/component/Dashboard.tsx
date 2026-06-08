@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, BookOpen, ArrowRight } from "lucide-react";
+import { Zap, BookOpen, ArrowRight, Edit2, Check } from "lucide-react";
 import type { FlashcardSet } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
+import { SelectDropdown } from "./SelectDropdown"; // <-- Import the new component
 
 export const Dashboard = ({
   user,
@@ -17,15 +19,29 @@ export const Dashboard = ({
 }) => {
   const { username, isLoading } = useUsername(user);
 
+  // Goal States
+  const [goalSetId, setGoalSetId] = useState<string>("");
+  const [dailyTarget, setDailyTarget] = useState<number>(15);
+  const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+
+  // Determine the active goal set (defaults to the first set if none is explicitly chosen)
+  const activeGoalSet = sets.find((s) => s.id === goalSetId) || sets[0];
+
   const displayName = isLoading
     ? "..."
     : username ||
       user?.displayName?.split(" ")[0] ||
       (user?.isAnonymous ? "Guest" : "Student");
 
+  // Format the sets array to match the DropdownOption structure expected by our new component
+  const dropdownOptions = sets.map((set) => ({
+    id: set.id,
+    label: set.title,
+    subLabel: `${set.cards.length} cards`,
+  }));
+
   return (
     <div className="h-[calc(100vh-64px)] w-full p-4 lg:p-6 overflow-hidden">
-      {/* The Big Box Background - Handles internal scrolling to keep rounded corners fixed */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -46,24 +62,86 @@ export const Dashboard = ({
 
           {/* Status Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-            {/* Main Featured Card */}
-            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-4xl p-10 relative overflow-hidden flex flex-col justify-between min-h-80 group transition-all hover:shadow-xl hover:shadow-blue-900/5">
-              <div className="relative z-10">
-                <span className="inline-block px-4 py-1 bg-[#c5c8f2] text-[#4d51a3] text-[10px] font-bold uppercase tracking-wider rounded-full mb-6">
-                  {sets[0]?.title ? "Current Goal" : "Daily Goal"}
-                </span>
-                <h3 className="text-4xl font-bold text-[#2d2d66] mb-4 max-w-md leading-tight">
-                  {sets[0]?.title || "Master Spanish Vocabulary"}
+            {/* Main Featured Card - Dynamic Goal Selector */}
+            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-4xl p-10 relative flex flex-col justify-between min-h-80 group transition-all hover:shadow-xl hover:shadow-blue-900/5">
+              <div className="relative z-10 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-block px-4 py-1 bg-[#c5c8f2] text-[#4d51a3] text-[10px] font-bold uppercase tracking-wider rounded-full w-max">
+                      Current Goal
+                    </span>
+
+                    {/* Editable Daily Target */}
+                    {isEditingTarget ? (
+                      <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border border-indigo-200 shadow-sm">
+                        <input
+                          type="number"
+                          min="1"
+                          value={dailyTarget}
+                          onChange={(e) =>
+                            setDailyTarget(Number(e.target.value))
+                          }
+                          className="w-12 outline-none font-bold text-[#4d51a3] text-xs bg-transparent"
+                          autoFocus
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && setIsEditingTarget(false)
+                          }
+                        />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          cards/day
+                        </span>
+                        <button
+                          onClick={() => setIsEditingTarget(false)}
+                          className="ml-1 text-green-500 hover:text-green-600 transition-colors"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex items-center gap-2 group/target cursor-pointer"
+                        onClick={() => setIsEditingTarget(true)}
+                      >
+                        <span className="text-[11px] font-bold text-[#4d51a3] bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-sm transition-colors group-hover/target:border-indigo-300">
+                          🎯 Target: {dailyTarget} cards/day
+                        </span>
+                        <button className="opacity-0 group-hover/target:opacity-100 transition-opacity p-1 text-gray-400 hover:text-[#656799]">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reusable Dropdown Component */}
+                  {sets.length > 0 && (
+                    <SelectDropdown
+                      options={dropdownOptions}
+                      value={activeGoalSet?.id || ""}
+                      onChange={(newId) => setGoalSetId(newId)}
+                      placeholder="Select Goal"
+                      className="w-full sm:w-[220px]"
+                    />
+                  )}
+                </div>
+
+                <h3 className="text-4xl font-bold text-[#2d2d66] mb-4 max-w-md leading-tight line-clamp-2">
+                  {activeGoalSet
+                    ? `Master "${activeGoalSet.title}"`
+                    : "Set Your Daily Goal"}
                 </h3>
-                <p className="text-gray-500 font-medium max-w-[320px] mb-8 leading-relaxed">
-                  {sets[0]?.description ||
-                    "You're 85% of the way to your weekly goal. Just 15 more cards to reach your streak!"}
+
+                <p className="text-gray-500 font-medium max-w-[360px] mb-8 leading-relaxed line-clamp-3">
+                  {activeGoalSet
+                    ? `Keep reviewing this set to hit your goal of ${dailyTarget} cards today. ${activeGoalSet.description}`
+                    : "Create your first flashcard set to start setting and tracking your learning goals!"}
                 </p>
+
                 <button
-                  onClick={() => sets[0] && onOpenSet(sets[0])}
-                  className="bg-[#656799] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#545685] transition-all shadow-lg shadow-purple-900/10 active:scale-95"
+                  onClick={() => activeGoalSet && onOpenSet(activeGoalSet)}
+                  disabled={!activeGoalSet}
+                  className="bg-[#656799] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#545685] transition-all shadow-lg shadow-purple-900/10 active:scale-95 w-max"
                 >
-                  {sets[0] ? "Continue Set" : "Start Learning"}
+                  {activeGoalSet ? "Continue Set" : "Start Learning"}
                 </button>
               </div>
             </div>

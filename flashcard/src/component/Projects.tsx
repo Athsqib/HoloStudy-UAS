@@ -13,6 +13,7 @@ import {
 import type { Project, FlashcardSet } from "../types";
 import { useViewControls } from "../hooks/useViewControls";
 import { FilterBar } from "./FilterBar";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectsProps {
   projects: Project[];
@@ -40,6 +41,7 @@ export const Projects = ({
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
   const projectSets = sets.filter((s) => s.projectId === selectedProjectId);
+  const navigate = useNavigate();
 
   // Hook for filtering/viewing main Projects
   const {
@@ -214,7 +216,7 @@ export const Projects = ({
                   {filteredProjects.map((project) => (
                     <div
                       key={project.id}
-                      onClick={() => setSelectedProjectId(project.id)}
+                      onClick={() => navigate(`/project/${project.id}`)}
                       className={`bg-white rounded-4xl border border-gray-50 shadow-sm cursor-pointer hover:shadow-xl hover:shadow-blue-900/5 transition-all relative group ${
                         projectViewMode === "grid"
                           ? "p-8 flex flex-col h-64"

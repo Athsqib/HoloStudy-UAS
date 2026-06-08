@@ -26,6 +26,10 @@ import { CreateFlashcard } from "./component/CreateFlashcard";
 import { Projects } from "./component/Projects";
 import { AuthScreen } from "./component/AuthScreen";
 import type { FlashcardSet, Project } from "./types";
+import { SetDetail } from "./component/SetDetail";
+import { ProtectedSetRoute } from "./component/ProtectedSetRoute";
+import { ProtectedProjectRoute } from "./component/ProtectedProjectRoute";
+import { ProjectDetail } from "./component/ProjectDetail";
 
 export default function App() {
   const navigate = useNavigate();
@@ -121,13 +125,13 @@ export default function App() {
       alert(
         "A flashcard set with this name already exists! Please choose a different name.",
       );
-      return;
+      return; // Stops the save process so the user can rename it
     }
     try {
       const setToSave = { ...set, userId: user.uid };
       await setDoc(doc(db, "flashcardSets", set.id), setToSave);
       setEditingSet(null);
-      navigate("/library");
+      navigate(`/set/${set.id}`);
     } catch (err) {
       handleFirestoreError(
         err,
@@ -152,8 +156,7 @@ export default function App() {
   };
 
   const handleOpenSet = (set: FlashcardSet) => {
-    setEditingSet(set);
-    navigate("/create");
+    navigate(`/set/${set.id}`);
   };
 
   const handleDeleteSet = async (setId: string) => {
@@ -259,6 +262,36 @@ export default function App() {
                 navigate("/library");
               }}
             />
+          }
+        />
+
+        <Route
+          path="/set/:setId"
+          element={
+            <ProtectedSetRoute sets={flashcardSets} user={user}>
+              {(authorizedSet) => (
+                <SetDetail
+                  set={authorizedSet}
+                  projects={projects}
+                  onSave={handleSaveSet}
+                />
+              )}
+            </ProtectedSetRoute>
+          }
+        />
+
+        <Route
+          path="/project/:projectId"
+          element={
+            <ProtectedProjectRoute projects={projects} user={user}>
+              {(authorizedProject) => (
+                <ProjectDetail
+                  project={authorizedProject}
+                  sets={flashcardSets}
+                  onOpenSet={handleOpenSet}
+                />
+              )}
+            </ProtectedProjectRoute>
           }
         />
 
