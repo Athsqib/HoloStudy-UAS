@@ -112,6 +112,17 @@ export default function App() {
 
   const handleSaveSet = async (set: FlashcardSet) => {
     if (!user) return;
+    const isDuplicate = flashcardSets.some(
+      (s) =>
+        s.title.toLowerCase() === set.title.trim().toLowerCase() &&
+        s.id !== set.id,
+    );
+    if (isDuplicate) {
+      alert(
+        "A flashcard set with this name already exists! Please choose a different name.",
+      );
+      return;
+    }
     try {
       const setToSave = { ...set, userId: user.uid };
       await setDoc(doc(db, "flashcardSets", set.id), setToSave);

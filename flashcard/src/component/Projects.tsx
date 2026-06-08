@@ -41,7 +41,19 @@ export const Projects = ({
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectTitle.trim()) return;
+    const title = newProjectTitle.trim();
+    if (!title) return;
+
+    const isDuplicate = projects.some(
+      (p) => p.title.toLowerCase() === title.toLowerCase(),
+    );
+
+    if (isDuplicate) {
+      alert(
+        "A project folder with this name already exists! Please choose a different name.",
+      );
+      return;
+    }
 
     const newProject: Project = {
       id: Math.random().toString(36).slice(2, 11),
