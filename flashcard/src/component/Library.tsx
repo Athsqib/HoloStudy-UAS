@@ -1,15 +1,8 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  BookOpen,
-  Clock,
-  MoreVertical,
-  Trash2,
-  LayoutGrid,
-  List,
-} from "lucide-react";
+import { BookOpen, Clock, MoreVertical, Trash2 } from "lucide-react";
 import type { FlashcardSet, Project } from "../types";
+import { useViewControls } from "../hooks/useViewControls";
+import { FilterBar } from "./FilterBar";
 
 interface LibraryProps {
   sets: FlashcardSet[];
@@ -26,13 +19,17 @@ export const Library = ({
   onOpenSet,
   onDeleteSet,
 }: LibraryProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  const filteredSets = sets.filter(
-    (set) =>
-      set.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      set.description.toLowerCase().includes(searchQuery.toLowerCase()),
+  const {
+    searchQuery,
+    setSearchQuery,
+    viewMode,
+    setViewMode,
+    filteredItems: filteredSets,
+  } = useViewControls(
+    sets,
+    (set, query) =>
+      set.title.toLowerCase().includes(query) ||
+      set.description.toLowerCase().includes(query),
   );
 
   const totalCards = sets.reduce((acc, set) => acc + set.cards.length, 0);
@@ -85,33 +82,13 @@ export const Library = ({
             </div>
           </div>
 
-          <div className="w-full max-w-3xl mb-12 flex flex-col sm:flex-row gap-4">
-            {/* Search Bar */}
-            <div className="relative w-full flex-1 h-14">
-              <input
-                type="text"
-                placeholder="Search flashcard sets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-[#7b81ff]/20 focus:border-[#7b81ff] outline-none shadow-sm text-gray-600 font-medium"
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-            </div>
-            <div className="flex bg-white border border-gray-200 rounded-full p-1.5 shadow-sm shrink-0">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2.5 rounded-full transition-all ${viewMode === "grid" ? "bg-[#6c7df3]/10 text-[#6c7df3]" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"}`}
-              >
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2.5 rounded-full transition-all ${viewMode === "list" ? "bg-[#6c7df3]/10 text-[#6c7df3]" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"}`}
-              >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+          <FilterBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            placeholder="Search flashcard sets..."
+          />
 
           {sets.length > 0 ? (
             <div
@@ -123,7 +100,11 @@ export const Library = ({
             >
               <div
                 onClick={onCreateFirst}
-                className="border-2 border-dashed border-gray-100 rounded-[32px] p-6 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] transition-all cursor-pointer group"
+                className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group ${
+                  viewMode === "grid"
+                    ? "flex-col h-64"
+                    : "flex-row h-24 px-8 w-full justify-start"
+                }`}
               >
                 <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
                   <BookOpen className="w-6 h-6" strokeWidth={1.5} />
@@ -150,7 +131,7 @@ export const Library = ({
                     `}
                   >
                     {viewMode === "grid" ? (
-                      /* ----------- GRID VIEW ----------- */
+                      // Grid Layout
                       <>
                         <div className="flex justify-between items-start mb-4">
                           <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
@@ -206,7 +187,7 @@ export const Library = ({
                         </div>
                       </>
                     ) : (
-                      /* ----------- LIST VIEW ----------- */
+                      // List Layout
                       <>
                         <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
                           <BookOpen className="w-6 h-6" />

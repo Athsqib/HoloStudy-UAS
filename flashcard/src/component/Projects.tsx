@@ -11,6 +11,8 @@ import {
   Trash2,
 } from "lucide-react";
 import type { Project, FlashcardSet } from "../types";
+import { useViewControls } from "../hooks/useViewControls";
+import { FilterBar } from "./FilterBar";
 
 interface ProjectsProps {
   projects: Project[];
@@ -38,6 +40,34 @@ export const Projects = ({
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
   const projectSets = sets.filter((s) => s.projectId === selectedProjectId);
+
+  // Hook for filtering/viewing main Projects
+  const {
+    searchQuery: projectSearchQuery,
+    setSearchQuery: setProjectSearchQuery,
+    viewMode: projectViewMode,
+    setViewMode: setProjectViewMode,
+    filteredItems: filteredProjects,
+  } = useViewControls(
+    projects,
+    (project, query) =>
+      project.title.toLowerCase().includes(query) ||
+      project.description.toLowerCase().includes(query),
+  );
+
+  // Hook for filtering/viewing Sets inside a selected Project
+  const {
+    searchQuery: setSearchQuery,
+    setSearchQuery: setSetSearchQuery,
+    viewMode: setViewMode,
+    setViewMode: setSetViewMode,
+    filteredItems: filteredProjectSets,
+  } = useViewControls(
+    projectSets,
+    (set, query) =>
+      set.title.toLowerCase().includes(query) ||
+      set.description.toLowerCase().includes(query),
+  );
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,17 +129,36 @@ export const Projects = ({
                   </p>
                 </div>
 
-                <div className="h-px bg-gray-100 w-full max-w-2xl mb-12" />
+                {/* Filter and View Toggle */}
+                <div className="w-full flex justify-center mb-12">
+                  <FilterBar
+                    searchQuery={projectSearchQuery}
+                    onSearchChange={setProjectSearchQuery}
+                    viewMode={projectViewMode}
+                    onViewModeChange={setProjectViewMode}
+                    placeholder="Search projects..."
+                  />
+                </div>
 
-                {/* Grid setup */}
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Create New Project Card */}
+                {/* Grid/List Container */}
+                <div
+                  className={`w-full ${
+                    projectViewMode === "grid"
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "flex flex-col gap-4 max-w-3xl w-full mx-auto"
+                  }`}
+                >
+                  {/* Create New Project Button/Form */}
                   {!isCreatingProject ? (
                     <button
                       onClick={() => setIsCreatingProject(true)}
-                      className="h-64 rounded-4xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
+                      className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group ${
+                        projectViewMode === "grid"
+                          ? "flex-col h-64"
+                          : "flex-row h-24 px-8 w-full justify-start"
+                      }`}
                     >
-                      <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
+                      <div className="w-12 h-12 shrink-0 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
                         <Plus className="w-6 h-6" />
                       </div>
                       <span className="text-xs font-bold uppercase tracking-widest">
@@ -120,7 +169,9 @@ export const Projects = ({
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-white p-8 rounded-4xl border border-gray-100 shadow-xl h-64 flex flex-col"
+                      className={`bg-white p-8 rounded-4xl border border-gray-100 shadow-xl flex flex-col ${
+                        projectViewMode === "grid" ? "h-64" : "w-full"
+                      }`}
                     >
                       <form
                         onSubmit={handleCreateProject}
@@ -159,55 +210,109 @@ export const Projects = ({
                     </motion.div>
                   )}
 
-                  {projects.map((project) => (
+                  {/* Render Filtered Projects */}
+                  {filteredProjects.map((project) => (
                     <div
                       key={project.id}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="bg-white p-8 rounded-4xl border border-gray-50 shadow-sm flex flex-col h-64 group cursor-pointer hover:shadow-xl hover:shadow-blue-900/5 transition-all relative"
+                      className={`bg-white rounded-4xl border border-gray-50 shadow-sm cursor-pointer hover:shadow-xl hover:shadow-blue-900/5 transition-all relative group ${
+                        projectViewMode === "grid"
+                          ? "p-8 flex flex-col h-64"
+                          : "p-5 pr-8 flex flex-row items-center gap-6 w-full"
+                      }`}
                     >
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                          <LayoutGrid className="w-6 h-6" />
-                        </div>
-                        <div className="relative group/menu">
-                          <button
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 text-gray-300 hover:text-gray-600"
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                          <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteProject(project.id);
-                              }}
-                              className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              Delete Project
-                            </button>
+                      {projectViewMode === "grid" ? (
+                        // Grid Layout
+                        <>
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                              <LayoutGrid className="w-6 h-6" />
+                            </div>
+                            <div className="relative group/menu">
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 text-gray-300 hover:text-gray-600"
+                              >
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                              <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteProject(project.id);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete Project
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
-                        {project.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
-                        {project.description}
-                      </p>
-                      <div className="mt-auto flex items-center justify-between text-xs font-bold text-gray-400">
-                        <span>
-                          {
-                            sets.filter((s) => s.projectId === project.id)
-                              .length
-                          }{" "}
-                          Sets Included
-                        </span>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-full text-[10px] uppercase tracking-wider">
-                          Project
-                        </span>
-                      </div>
+                          <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
+                            {project.title}
+                          </h3>
+                          <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
+                            {project.description}
+                          </p>
+                          <div className="mt-auto flex items-center justify-between text-xs font-bold text-gray-400">
+                            <span>
+                              {
+                                sets.filter((s) => s.projectId === project.id)
+                                  .length
+                              }{" "}
+                              Sets Included
+                            </span>
+                            <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-full text-[10px] uppercase tracking-wider">
+                              Project
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        // List Layout
+                        <>
+                          <div className="w-14 h-14 shrink-0 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                            <LayoutGrid className="w-6 h-6" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-[#1a1a4b] mb-1 truncate">
+                              {project.title}
+                            </h3>
+                            <p className="text-sm text-gray-400 font-medium truncate">
+                              {project.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-8 shrink-0">
+                            <span className="text-xs font-bold text-gray-400 w-24 text-right">
+                              {
+                                sets.filter((s) => s.projectId === project.id)
+                                  .length
+                              }{" "}
+                              Sets
+                            </span>
+                            <div className="relative group/menu">
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 text-gray-300 hover:text-gray-600"
+                              >
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                              <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteProject(project.id);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -218,8 +323,9 @@ export const Projects = ({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
+                className="flex flex-col items-center w-full"
               >
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-8 w-full">
                   <button
                     onClick={() => setSelectedProjectId(null)}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#656799] transition-colors"
@@ -236,66 +342,128 @@ export const Projects = ({
                   </button>
                 </div>
 
-                <div className="mb-12">
+                <div className="mb-12 text-center">
                   <h2 className="text-4xl font-bold text-[#1a1a4b] mb-3">
                     {selectedProject?.title}
                   </h2>
-                  <p className="text-gray-500 font-medium leading-relaxed max-w-2xl">
+                  <p className="text-gray-500 font-medium leading-relaxed max-w-2xl mx-auto">
                     {selectedProject?.description}
                   </p>
                 </div>
 
-                <div className="h-px bg-gray-100 w-full mb-12" />
+                {/* Filter and View Toggle for Sets inside Project */}
+                <div className="w-full flex justify-center mb-12">
+                  <FilterBar
+                    searchQuery={setSearchQuery}
+                    onSearchChange={setSetSearchQuery}
+                    viewMode={setViewMode}
+                    onViewModeChange={setSetViewMode}
+                    placeholder={`Search in ${selectedProject?.title}...`}
+                  />
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {projectSets.length > 0 ? (
-                    projectSets.map((set) => (
+                <div
+                  className={`w-full ${
+                    setViewMode === "grid"
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-6"
+                      : "flex flex-col gap-4 max-w-3xl w-full mx-auto"
+                  }`}
+                >
+                  {filteredProjectSets.length > 0 ? (
+                    filteredProjectSets.map((set) => (
                       <div
                         key={set.id}
                         onClick={() => onOpenSet(set)}
-                        className="bg-white p-6 rounded-4xl border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative"
+                        className={`bg-white rounded-4xl border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative ${
+                          setViewMode === "grid"
+                            ? "p-6 flex flex-col"
+                            : "p-4 pr-6 flex flex-row items-center gap-6"
+                        }`}
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
-                            <BookOpen className="w-6 h-6" />
-                          </div>
-                          <div className="relative group/setmenu">
-                            <button
-                              onClick={(e) => e.stopPropagation()}
-                              className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/setmenu:opacity-100 group-hover/setmenu:visible transition-all z-20">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteSet(set.id);
-                                }}
-                                className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Delete Set
-                              </button>
+                        {setViewMode === "grid" ? (
+                          <>
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                                <BookOpen className="w-6 h-6" />
+                              </div>
+                              <div className="relative group/setmenu">
+                                <button
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                                >
+                                  <MoreVertical className="w-5 h-5" />
+                                </button>
+                                <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/setmenu:opacity-100 group-hover/setmenu:visible transition-all z-20">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteSet(set.id);
+                                    }}
+                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete Set
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                        <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
-                          {set.title}
-                        </h3>
-                        <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
-                          {set.description}
-                        </p>
-
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                            <Clock className="w-4 h-4" />
-                            <span>{set.cards.length} Cards</span>
-                          </div>
-                          <span className="text-[#6c7df3] font-bold text-sm hover:underline">
-                            Open Set
-                          </span>
-                        </div>
+                            <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
+                              {set.title}
+                            </h3>
+                            <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
+                              {set.description}
+                            </p>
+                            <div className="flex items-center justify-between mt-auto">
+                              <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                <Clock className="w-4 h-4" />
+                                <span>{set.cards.length} Cards</span>
+                              </div>
+                              <span className="text-[#6c7df3] font-bold text-sm hover:underline">
+                                Open Set
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-14 h-14 shrink-0 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
+                              <BookOpen className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-xl font-bold text-[#1a1a4b] mb-1 truncate">
+                                {set.title}
+                              </h3>
+                              <p className="text-sm text-gray-400 font-medium truncate">
+                                {set.description}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-8 shrink-0">
+                              <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                <Clock className="w-4 h-4" />
+                                <span>{set.cards.length} Cards</span>
+                              </div>
+                              <div className="relative group/setmenu">
+                                <button
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                                >
+                                  <MoreVertical className="w-5 h-5" />
+                                </button>
+                                <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/setmenu:opacity-100 group-hover/setmenu:visible transition-all z-20">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteSet(set.id);
+                                    }}
+                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete Set
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   ) : (
