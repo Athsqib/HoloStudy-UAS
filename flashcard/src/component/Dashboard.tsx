@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, BookOpen, ArrowRight, Edit2, Check } from "lucide-react";
+import { Zap, BookOpen, ArrowRight, Edit2, Check, Target } from "lucide-react";
 import type { FlashcardSet } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
@@ -73,7 +73,7 @@ export const Dashboard = ({
 
                     {/* Editable Daily Target */}
                     {isEditingTarget ? (
-                      <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-full border border-indigo-200 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white px-3 py-1 rounded-2xl border border-indigo-200 shadow-sm">
                         <input
                           type="number"
                           min="1"
@@ -102,8 +102,9 @@ export const Dashboard = ({
                         className="flex items-center gap-2 group/target cursor-pointer"
                         onClick={() => setIsEditingTarget(true)}
                       >
-                        <span className="text-[11px] font-bold text-[#4d51a3] bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-sm transition-colors group-hover/target:border-indigo-300">
-                          🎯 Target: {dailyTarget} cards/day
+                        <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#4d51a3] bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-sm transition-colors group-hover/target:border-indigo-300">
+                          <Target className="w-3.5 h-3.5" />
+                          Target: {dailyTarget} cards/day
                         </span>
                         <button className="opacity-0 group-hover/target:opacity-100 transition-opacity p-1 text-gray-400 hover:text-[#656799]">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -119,7 +120,7 @@ export const Dashboard = ({
                       value={activeGoalSet?.id || ""}
                       onChange={(newId) => setGoalSetId(newId)}
                       placeholder="Select Goal"
-                      className="w-full sm:w-[220px]"
+                      className="w-full sm:w-55"
                     />
                   )}
                 </div>
@@ -130,7 +131,7 @@ export const Dashboard = ({
                     : "Set Your Daily Goal"}
                 </h3>
 
-                <p className="text-gray-500 font-medium max-w-[360px] mb-8 leading-relaxed line-clamp-3">
+                <p className="text-gray-500 font-medium max-w-90 mb-8 leading-relaxed line-clamp-3">
                   {activeGoalSet
                     ? `Keep reviewing this set to hit your goal of ${dailyTarget} cards today. ${activeGoalSet.description}`
                     : "Create your first flashcard set to start setting and tracking your learning goals!"}

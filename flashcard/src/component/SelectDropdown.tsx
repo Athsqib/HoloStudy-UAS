@@ -64,7 +64,7 @@ export const SelectDropdown = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 right-0 min-w-full max-w-[85vw] sm:w-max sm:min-w-[260px] bg-white border border-indigo-100 rounded-2xl shadow-2xl z-[100] overflow-hidden py-2 origin-top-right"
+            className="absolute top-full mt-2 left-0 w-full bg-white border border-indigo-100 rounded-2xl shadow-2xl z-100 overflow-hidden py-2 origin-top-right"
           >
             <div className="max-h-[50vh] sm:max-h-64 overflow-y-auto no-scrollbar">
               {options.map((option) => {

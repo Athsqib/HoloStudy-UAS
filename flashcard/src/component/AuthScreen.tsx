@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInAnonymously,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import {
   collection,
@@ -35,6 +36,7 @@ export const AuthScreen = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
 
   const handleGoogleSignIn = async () => {
     try {
@@ -58,6 +60,72 @@ export const AuthScreen = () => {
       console.error("Guest Auth error:", error);
       const err = error as { message?: string };
       setError(err.message || "Failed to sign in as guest");
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!identifier) {
+      setError(
+        "Please enter your username or email in the top field to reset your password.",
+      );
+      setResetMessage("");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError("");
+      setResetMessage("");
+
+      let resetEmail = identifier.trim();
+
+      // If they entered a username, find their email in the database first
+      if (!resetEmail.includes("@")) {
+        const usersRef = collection(db, "users");
+        const q = query(
+          usersRef,
+          where("username", "==", resetEmail.toLowerCase()),
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          throw new Error(
+            "Username not found. Please enter a valid username or email.",
+          );
+        }
+        resetEmail = querySnapshot.docs[0].data().email;
+      }
+
+      const COOLDOWN_DAYS = 5;
+      const COOLDOWN_MS = COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+      const storageKey = `pwd_reset_${resetEmail}`; // Unique key for this email
+      const lastResetStr = localStorage.getItem(storageKey);
+
+      if (lastResetStr) {
+        const lastResetTime = parseInt(lastResetStr, 10);
+        const timeSinceLastReset = Date.now() - lastResetTime;
+
+        // If 5 days haven't passed yet, block the request
+        if (timeSinceLastReset < COOLDOWN_MS) {
+          const timeLeftMs = COOLDOWN_MS - timeSinceLastReset;
+          const daysLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60 * 24));
+          throw new Error(
+            `You can only request a reset once every 5 days. Please try again in ${daysLeft} day(s).`,
+          );
+        }
+      }
+      // Send the password reset email
+      await sendPasswordResetEmail(auth, resetEmail);
+
+      // Save the current timestamp to Local Storage for the cooldown
+      localStorage.setItem(storageKey, Date.now().toString());
+
+      setResetMessage("Password reset email sent! Check your inbox.");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || "Failed to send reset email.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -174,6 +242,13 @@ export const AuthScreen = () => {
           </div>
         )}
 
+        {resetMessage && (
+          <div className="mb-6 p-4 bg-green-50 text-green-600 rounded-2xl text-sm font-medium flex items-center gap-2 text-left">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{resetMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleEmailAuth} className="flex flex-col gap-4 mb-6">
           {isLoginMode ? (
             <div className="relative">
@@ -222,6 +297,19 @@ export const AuthScreen = () => {
             />
           </div>
 
+          {isLoginMode && (
+            <div className="flex justify-end -mt-2">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                className="text-sm text-[#6c7df3] font-semibold hover:underline focus:outline-none disabled:opacity-50"
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isLoading}
@@ -241,6 +329,7 @@ export const AuthScreen = () => {
           onClick={() => {
             setIsLoginMode(!isLoginMode);
             setError("");
+            setResetMessage("");
             setIdentifier("");
             setUsername("");
             setEmail("");

@@ -15,7 +15,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
 import type { User } from "firebase/auth";
 import { db, handleFirestoreError, OperationType, auth } from "./lib/firebase";
 import { Sidebar } from "./component/Sidebar";
@@ -151,8 +151,21 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth);
+  const handleLogout = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        if (user.isAnonymous) {
+          // Completely deletes the guest account from Firebase Auth
+          await deleteUser(user);
+        } else {
+          // Just logs out normally for registered users
+          await signOut(auth);
+        }
+      }
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    }
   };
 
   const handleOpenSet = (set: FlashcardSet) => {
@@ -328,7 +341,7 @@ export default function App() {
               <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <div className="min-h-screen bg-[#fafbfc] font-sans text-[#2d2d66] overflow-x-hidden">
+            <div className="min-h-screen h-dvh w-full bg-[#fafbfc] font-sans text-[#2d2d66] overflow-x-hidden">
               <Sidebar
                 activeTab={currentTab}
                 onTabChange={(tab) => {
@@ -341,7 +354,9 @@ export default function App() {
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
               />
               <div
-                className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? "ml-20" : "ml-0"}`}
+                className={`transition-all duration-300 ease-in-out ${
+                  isSidebarOpen ? "md:ml-20" : "ml-0"
+                }`}
               >
                 <Header
                   user={user}
@@ -350,7 +365,9 @@ export default function App() {
                   isSidebarOpen={isSidebarOpen}
                   onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                 />
-                <main>{renderContent()}</main>
+                <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 md:pb-0">
+                  {renderContent()}
+                </main>
               </div>
             </div>
           )

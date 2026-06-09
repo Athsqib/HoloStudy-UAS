@@ -55,7 +55,7 @@ export const Library = ({
           <div className="h-px bg-gray-100 w-full max-w-2xl mb-12" />
 
           {/* Stats Bar */}
-          <div className="w-full max-w-3xl bg-white rounded-[32px] p-8 shadow-sm border border-gray-50 flex items-center justify-around mb-12">
+          <div className="w-full max-w-3xl bg-white rounded-4xl p-8 shadow-sm border border-gray-50 flex items-center justify-around mb-12">
             <div className="text-center">
               <span className="block text-4xl font-bold text-[#656799] mb-1">
                 {sets.length}
@@ -122,7 +122,7 @@ export const Library = ({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => onOpenSet(set)}
-                    className={`bg-white rounded-[32px] border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative
+                    className={`bg-white rounded-4xl border border-gray-50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative
                     ${
                       viewMode === "grid"
                         ? "p-6 flex flex-col h-full overflow-hidden"

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trash2, Plus } from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
 import { EditableTextarea } from "./EditableTextarea";
+import { SelectDropdown } from "./SelectDropdown";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -54,6 +55,13 @@ export const CreateFlashcard = ({
     };
     onSave(newSet);
   };
+
+  const projectOptions = useMemo(() => {
+    return [
+      { id: "", label: "Uncategorized" },
+      ...projects.map((p) => ({ id: p.id, label: p.title })),
+    ];
+  }, [projects]);
 
   return (
     <div className="h-[calc(100vh-64px)] w-full p-4 lg:p-6 overflow-hidden">
@@ -116,18 +124,15 @@ export const CreateFlashcard = ({
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
                 Project Folder (Optional)
               </label>
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm appearance-none"
-              >
-                <option value="">Uncategorized</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+              <div className="h-13.5 flex items-stretch">
+                <SelectDropdown
+                  options={projectOptions}
+                  value={selectedProjectId}
+                  onChange={(val) => setSelectedProjectId(val)}
+                  placeholder="Select a project..."
+                  className="w-full flex"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">

@@ -129,7 +129,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
                 </div>
 
                 {/* Back */}
-                <div className="absolute inset-0 w-full h-full backface-hidden bg-indigo-50 border-2 border-indigo-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center [transform:rotateX(180deg)]">
+                <div className="absolute inset-0 w-full h-full backface-hidden bg-indigo-50 border-2 border-indigo-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center transform-[rotateX(180deg)]">
                   <p className="text-2xl font-medium text-indigo-900 leading-relaxed">
                     {backText}
                   </p>

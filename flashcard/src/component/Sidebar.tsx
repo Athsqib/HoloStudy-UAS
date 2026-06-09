@@ -17,22 +17,30 @@ const SidebarItem = ({
 }: SidebarItemProps) => (
   <button
     onClick={onClick}
-    className={`w-full flex flex-col items-center justify-center py-4 px-1 transition-colors group relative ${
+    className={`w-full h-full md:h-auto flex flex-col items-center justify-center py-2 md:py-4 px-1 transition-colors group relative ${
       active ? "text-[#4b4b88]" : "text-gray-400 hover:text-gray-600"
     }`}
   >
     <Icon
-      className={`w-6 h-6 mb-1 ${active ? "fill-[#c5c8f2]/30" : ""}`}
+      className={`w-5 h-5 md:w-6 md:h-6 mb-0.5 md:mb-1 ${active ? "fill-[#c5c8f2]/30" : ""}`}
       strokeWidth={active ? 2 : 1.5}
     />
-    <span className="text-[10px] font-bold uppercase tracking-tight scale-90 text-center">
+    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-tight scale-90 md:scale-100 text-center">
       {label}
     </span>
     {active && (
-      <motion.div
-        layoutId="activeTabIndicator"
-        className="absolute left-0 w-1 h-8 bg-[#6c7df3] rounded-r-full"
-      />
+      <>
+        {/* Desktop Active Indicator */}
+        <motion.div
+          layoutId="activeTabIndicatorDesktop"
+          className="hidden md:block absolute left-0 w-1 h-8 bg-[#6c7df3] rounded-r-full"
+        />
+        {/* Mobile Active Indicator */}
+        <motion.div
+          layoutId="activeTabIndicatorMobile"
+          className="md:hidden absolute bottom-0 w-8 h-1 bg-[#6c7df3] rounded-t-full"
+        />
+      </>
     )}
   </button>
 );
@@ -50,12 +58,20 @@ export const Sidebar = ({
 }) => {
   return (
     <aside
-      className={`w-20 h-screen bg-white border-r border-gray-100 flex flex-col items-center fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`bg-white border-gray-100 fixed z-50 transition-transform duration-300 ease-in-out
+        /* Mobile: Top Navigation Bar */
+        bottom-0 left-0 w-full h-16 flex flex-row items-center justify-evenly border-b shadow-sm
+        /* Desktop: Left Sidebar */
+        md:w-20 md:h-screen md:flex-col md:justify-start md:border-r md:border-b-0 md:shadow-none
+        ${
+          isOpen
+            ? "translate-y-0 md:translate-x-0"
+            : "-translate-y-full md:translate-y-0 md:-translate-x-full"
+        }
+      `}
     >
-      <div className="w-full flex flex-col items-center py-4 mb-4">
-        {/* Changed onClick from onTabChange to onToggle */}
+      {/* Hide the menu toggle button on mobile since space is tight */}
+      <div className="hidden md:flex w-full flex-col items-center py-4 mb-4">
         <button
           onClick={onToggle}
           className="flex items-center justify-center p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors"
@@ -64,7 +80,7 @@ export const Sidebar = ({
         </button>
       </div>
 
-      <div className="flex-1 w-full flex flex-col items-center">
+      <div className="flex-1 w-full flex flex-row md:flex-col items-center justify-center md:justify-start h-full">
         <SidebarItem
           icon={Folder}
           label="Projects"
@@ -77,7 +93,7 @@ export const Sidebar = ({
           active={activeTab === "library"}
           onClick={() => onTabChange("library")}
         />
-        <div className="w-8 h-px bg-gray-100 my-4" />
+        <div className="hidden md:block w-8 h-px bg-gray-100 my-4" />
         <SidebarItem
           icon={FilePlus}
           label="Create"
