@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Zap, BookOpen, ArrowRight, Edit2, Check, Target } from "lucide-react";
-import type { FlashcardSet } from "../types";
+import {
+  Zap,
+  BookOpen,
+  ArrowRight,
+  Edit2,
+  Check,
+  Target,
+  Clock,
+} from "lucide-react";
+import type { FlashcardSet, UserProfile } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
 import { SelectDropdown } from "./SelectDropdown";
@@ -28,8 +36,10 @@ export const Dashboard = ({
 
   // Determine the active goal set (defaults to the first set if none is explicitly chosen)
   const activeGoalSet = sets.find((s) => s.id === goalSetId) || sets[0];
-  // State to hold streak from firestore
+
+  // State to hold streak data based on UserProfile type
   const [currentStreak, setCurrentStreak] = useState<number>(0);
+  const [hasCompletedToday, setHasCompletedToday] = useState<boolean>(false);
 
   const displayName = isLoading
     ? "..."
@@ -53,8 +63,29 @@ export const Dashboard = ({
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
-          const userData = userSnap.data();
+          const userData = userSnap.data() as UserProfile;
           setCurrentStreak(userData.streakCount || 0);
+
+          let completed = false;
+
+          // Check if the streak was already registered today!
+          if (userData.lastStreakDate) {
+            // Handle both Firestore Timestamps and ISO strings safely
+            const lastDate = userData.lastStreakDate.toDate();
+
+            const today = new Date();
+
+            // If the last activity was today, set our flag to true
+            if (
+              lastDate.getDate() === today.getDate() &&
+              lastDate.getMonth() === today.getMonth() &&
+              lastDate.getFullYear() === today.getFullYear()
+            ) {
+              completed = true;
+            }
+          }
+
+          setHasCompletedToday(completed);
         }
       } catch (error) {
         console.error("Error fetching user streak:", error);
@@ -70,19 +101,45 @@ export const Dashboard = ({
     100,
   );
 
-  // Calculate the last 7 days, ending with today
+  // --- STREAK CYCLE MATH ---
   const todayDate = new Date();
-  const future7Days = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date(todayDate);
-    // when i=0 (first item), it adds 0 days (today).
-    // when i=1, it adds 1 day (tomorrow), etc.
-    d.setDate(todayDate.getDate() + i);
+  todayDate.setHours(0, 0, 0, 0); // Reset time to midnight for accurate comparison
+
+  let daysSinceCycleStart;
+
+  if (hasCompletedToday) {
+    daysSinceCycleStart = currentStreak > 0 ? (currentStreak - 1) % 7 : 0;
+  } else {
+    daysSinceCycleStart = currentStreak % 7;
+  }
+
+  const startOfWeek = new Date(todayDate);
+  startOfWeek.setDate(todayDate.getDate() - daysSinceCycleStart);
+
+  const currentWeekDays = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+
+    const isToday = d.getTime() === todayDate.getTime();
+    const distanceFromToday = Math.round(
+      (todayDate.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    let isPartOfStreak;
+
+    if (hasCompletedToday) {
+      isPartOfStreak =
+        distanceFromToday >= 0 && distanceFromToday < currentStreak;
+    } else {
+      isPartOfStreak =
+        distanceFromToday > 0 && distanceFromToday <= currentStreak;
+    }
 
     return {
       id: i,
       label: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(), // e.g. "MON", "TUE"
-      isToday: i === 0, // The last item in the array is always today
-      isPartOfStreak: i === 0 && currentStreak > 0, // Highlights the days that fall within the streak
+      isToday,
+      isPartOfStreak,
     };
   });
 
@@ -196,9 +253,23 @@ export const Dashboard = ({
             {/* Streak Card */}
             <div className="bg-[#e9e9ff] rounded-4xl p-8 flex flex-col justify-between shadow-sm border border-white/50 transition-all hover:shadow-xl hover:shadow-indigo-900/5">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#c5c8f2] flex items-center justify-center text-[#4d51a3] mb-6 shadow-sm">
-                  <Zap className="w-6 h-6 fill-[#4d51a3]" />
+                <div className="flex justify-between items-start mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-[#c5c8f2] flex items-center justify-center text-[#4d51a3] shadow-sm">
+                    <Zap className="w-6 h-6 fill-[#4d51a3]" />
+                  </div>
+
+                  {/* --- NEW STATUS BADGE --- */}
+                  {hasCompletedToday ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-700 px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                      <Check className="w-3.5 h-3.5" /> Done Today
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
+                      <Clock className="w-3.5 h-3.5" /> Not Yet Studied
+                    </span>
+                  )}
                 </div>
+
                 <h3 className="text-2xl font-bold text-[#2d2d66] mb-2 tracking-tight">
                   {currentStreak} Day Streak
                 </h3>
@@ -217,9 +288,9 @@ export const Dashboard = ({
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
-                {/* Rolling Weekdays */}
+                {/* Fixed Weekdays */}
                 <div className="flex justify-between px-1">
-                  {future7Days.map((day) => (
+                  {currentWeekDays.map((day) => (
                     <span
                       key={day.id}
                       className={`text-[9px] font-bold tracking-tighter transition-colors ${
