@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -35,21 +35,42 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
   const backText =
     currentCard?.back || currentCard?.definition || "No Back Text";
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setIsFlipped(false);
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % set.cards.length);
     }, 150);
-  };
+  }, [set.cards.length]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setIsFlipped(false);
     setTimeout(() => {
       setCurrentIndex(
         (prev) => (prev - 1 + set.cards.length) % set.cards.length,
       );
     }, 150);
-  };
+  }, [set.cards.length]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts if we are editing or if there are no cards
+      if (isEditing || set.cards.length === 0) return;
+
+      if (e.key === "ArrowRight") {
+        handleNext();
+      } else if (e.key === "ArrowLeft") {
+        handlePrev();
+      } else if (e.key === " " || e.code === "Space") {
+        // Prevent default to stop the page from scrolling down when pressing spacebar
+        e.preventDefault();
+        setIsFlipped((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing, set.cards.length, handleNext, handlePrev]);
 
   // --- EDIT MODE ---
   if (isEditing) {

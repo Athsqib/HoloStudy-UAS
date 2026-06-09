@@ -1,5 +1,5 @@
 import type { User } from "firebase/auth";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, Telescope } from "lucide-react";
 import { useUsername } from "../hooks/useUsername";
 
 interface HeaderProps {
@@ -40,7 +40,8 @@ export const Header = ({
           className="flex items-center cursor-pointer group"
           onClick={onLogoClick}
         >
-          <h1 className="text-[#2d2d66] font-semibold text-xl tracking-tight group-hover:text-[#6c7df3] transition-colors">
+          <h1 className="flex gap-1 text-[#2d2d66] font-semibold text-xl tracking-tight group-hover:text-[#6c7df3] transition-colors">
+            <Telescope className="w-6 h-6" />
             HoloStudy
           </h1>
         </div>
