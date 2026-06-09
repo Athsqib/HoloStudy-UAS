@@ -246,7 +246,7 @@ export const Projects = ({
                                   className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
-                                  Delete Project
+                                  Delete
                                 </button>
                               </div>
                             </div>

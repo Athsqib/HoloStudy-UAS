@@ -30,6 +30,7 @@ import { SetDetail } from "./component/SetDetail";
 import { ProtectedSetRoute } from "./component/ProtectedSetRoute";
 import { ProtectedProjectRoute } from "./component/ProtectedProjectRoute";
 import { ProjectDetail } from "./component/ProjectDetail";
+import { ConfirmModal } from "./component/ConfirmModal";
 
 export default function App() {
   const navigate = useNavigate();
@@ -41,6 +42,12 @@ export default function App() {
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    type: "set" | "project" | null;
+    id: string | null;
+  }>({ isOpen: false, type: null, id: null });
 
   // Auth Listener
   useEffect(() => {
@@ -172,27 +179,33 @@ export default function App() {
     navigate(`/set/${set.id}`);
   };
 
-  const handleDeleteSet = async (setId: string) => {
-    if (!window.confirm("Are you sure you want to delete this flashcard set?"))
-      return;
-    try {
-      await deleteDoc(doc(db, "flashcardSets", setId));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `flashcardSets/${setId}`);
-    }
+  const handleDeleteSet = (setId: string) => {
+    setDeleteModal({ isOpen: true, type: "set", id: setId });
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this project? All associated sets will remain but will be unassigned.",
-      )
-    )
-      return;
+  const handleDeleteProject = (projectId: string) => {
+    setDeleteModal({ isOpen: true, type: "project", id: projectId });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteModal.id || !deleteModal.type) return;
+
     try {
-      await deleteDoc(doc(db, "projects", projectId));
+      if (deleteModal.type === "set") {
+        await deleteDoc(doc(db, "flashcardSets", deleteModal.id));
+      } else if (deleteModal.type === "project") {
+        await deleteDoc(doc(db, "projects", deleteModal.id));
+      }
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `projects/${projectId}`);
+      const collectionName =
+        deleteModal.type === "set" ? "flashcardSets" : "projects";
+      handleFirestoreError(
+        err,
+        OperationType.DELETE,
+        `${collectionName}/${deleteModal.id}`,
+      );
+    } finally {
+      setDeleteModal({ isOpen: false, type: null, id: null });
     }
   };
 
@@ -324,55 +337,75 @@ export default function App() {
   };
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/dashboard" /> : <AuthScreen />}
-      />
-      <Route
-        path="*"
-        element={
-          !user ? (
-            // If not logged in, kick them back to login
-            <Navigate to="/login" />
-          ) : dataLoading ? (
-            // Spinner Indicator
-            <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <div className="min-h-screen h-dvh w-full bg-[#fafbfc] font-sans text-[#2d2d66] overflow-x-hidden">
-              <Sidebar
-                activeTab={currentTab}
-                onTabChange={(tab) => {
-                  if (tab === "create") {
-                    setEditingSet(null);
-                  }
-                  navigate(`/${tab}`);
-                }}
-                isOpen={isSidebarOpen}
-                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-              />
-              <div
-                className={`transition-all duration-300 ease-in-out ${
-                  isSidebarOpen ? "md:ml-20" : "ml-0"
-                }`}
-              >
-                <Header
-                  user={user}
-                  onLogoClick={() => navigate("/dashboard")}
-                  onLogout={handleLogout}
-                  isSidebarOpen={isSidebarOpen}
-                  onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                />
-                <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 md:pb-0">
-                  {renderContent()}
-                </main>
+    <>
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/dashboard" /> : <AuthScreen />}
+        />
+        <Route
+          path="*"
+          element={
+            !user ? (
+              // If not logged in, kick them back to login
+              <Navigate to="/login" />
+            ) : dataLoading ? (
+              // Spinner Indicator
+              <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-[#6c7df3] border-t-transparent rounded-full animate-spin" />
               </div>
-            </div>
-          )
+            ) : (
+              <div className="min-h-screen h-dvh w-full bg-[#fafbfc] font-sans text-[#2d2d66] overflow-x-hidden">
+                <Sidebar
+                  activeTab={currentTab}
+                  onTabChange={(tab) => {
+                    if (tab === "create") {
+                      setEditingSet(null);
+                    }
+                    navigate(`/${tab}`);
+                  }}
+                  isOpen={isSidebarOpen}
+                  onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                />
+                <div
+                  className={`transition-all duration-300 ease-in-out ${
+                    isSidebarOpen ? "md:ml-20" : "ml-0"
+                  }`}
+                >
+                  <Header
+                    user={user}
+                    onLogoClick={() => navigate("/dashboard")}
+                    onLogout={handleLogout}
+                    isSidebarOpen={isSidebarOpen}
+                    onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                  />
+                  <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 md:pb-0">
+                    {renderContent()}
+                  </main>
+                </div>
+              </div>
+            )
+          }
+        />
+      </Routes>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={
+          deleteModal.type === "project"
+            ? "Delete Project?"
+            : "Delete Flashcard Set?"
         }
+        message={
+          deleteModal.type === "project"
+            ? "Are you sure you want to delete this project? All associated sets will remain but will be unassigned."
+            : "Are you sure you want to delete this flashcard set? This action cannot be undone."
+        }
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, type: null, id: null })}
       />
-    </Routes>
+    </>
   );
 }

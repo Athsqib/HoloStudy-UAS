@@ -42,7 +42,22 @@ export const AuthScreen = () => {
     try {
       setIsLoading(true);
       setError("");
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      const userRef = doc(db, "users", user.uid);
+
+      await setDoc(
+        userRef,
+        {
+          uid: user.uid,
+          email: user.email,
+          username: user.displayName || user.email?.split("@")[0], // Fallback username
+          photoURL: user.photoURL,
+          createdAt: new Date().toISOString(),
+        },
+        { merge: true },
+      );
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to sign in with Google";

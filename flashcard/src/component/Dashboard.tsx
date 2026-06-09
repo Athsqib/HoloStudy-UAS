@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap, BookOpen, ArrowRight, Edit2, Check, Target } from "lucide-react";
 import type { FlashcardSet } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
-import { SelectDropdown } from "./SelectDropdown"; // <-- Import the new component
+import { SelectDropdown } from "./SelectDropdown";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 export const Dashboard = ({
   user,
@@ -26,6 +28,8 @@ export const Dashboard = ({
 
   // Determine the active goal set (defaults to the first set if none is explicitly chosen)
   const activeGoalSet = sets.find((s) => s.id === goalSetId) || sets[0];
+  // State to hold streak from firestore
+  const [currentStreak, setCurrentStreak] = useState<number>(0);
 
   const displayName = isLoading
     ? "..."
@@ -39,6 +43,48 @@ export const Dashboard = ({
     label: set.title,
     subLabel: `${set.cards.length} cards`,
   }));
+
+  useEffect(() => {
+    const fetchUserStreak = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setCurrentStreak(userData.streakCount || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching user streak:", error);
+      }
+    };
+
+    fetchUserStreak();
+  }, [user]);
+
+  const maxStreakDisplay = 7;
+  const progressPercentage = Math.min(
+    (currentStreak / maxStreakDisplay) * 100,
+    100,
+  );
+
+  // Calculate the last 7 days, ending with today
+  const todayDate = new Date();
+  const future7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(todayDate);
+    // when i=0 (first item), it adds 0 days (today).
+    // when i=1, it adds 1 day (tomorrow), etc.
+    d.setDate(todayDate.getDate() + i);
+
+    return {
+      id: i,
+      label: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(), // e.g. "MON", "TUE"
+      isToday: i === 0, // The last item in the array is always today
+      isPartOfStreak: i === 0 && currentStreak > 0, // Highlights the days that fall within the streak
+    };
+  });
 
   return (
     <div className="h-[calc(100vh-64px)] w-full p-4 lg:p-6 overflow-hidden">
@@ -154,30 +200,39 @@ export const Dashboard = ({
                   <Zap className="w-6 h-6 fill-[#4d51a3]" />
                 </div>
                 <h3 className="text-2xl font-bold text-[#2d2d66] mb-2 tracking-tight">
-                  7 Day Streak
+                  {currentStreak} Day Streak
                 </h3>
                 <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                  You are on fire! Don't let the flame go out.
+                  {currentStreak >= 3
+                    ? "You are on fire! Don't let the flame go out."
+                    : "Great start! Keep going to build your streak."}
                 </p>
               </div>
 
               <div className="mt-8">
                 {/* Progress Bar */}
                 <div className="h-3 w-full bg-white/50 rounded-full overflow-hidden mb-4 border border-white/20 p-0.5">
-                  <div className="h-full bg-[#656799] rounded-full w-[85%] transition-all duration-1000 shadow-sm" />
+                  <div
+                    className="h-full bg-[#656799] rounded-full transition-all duration-1000 shadow-sm"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
                 </div>
-                {/* Weekdays */}
+                {/* Rolling Weekdays */}
                 <div className="flex justify-between px-1">
-                  {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                    (day) => (
-                      <span
-                        key={day}
-                        className={`text-[9px] font-bold tracking-tighter ${day === "SAT" ? "text-[#656799]" : "text-gray-400"}`}
-                      >
-                        {day}
-                      </span>
-                    ),
-                  )}
+                  {future7Days.map((day) => (
+                    <span
+                      key={day.id}
+                      className={`text-[9px] font-bold tracking-tighter transition-colors ${
+                        day.isToday
+                          ? "text-[#2d2d66] scale-110"
+                          : day.isPartOfStreak
+                            ? "text-[#656799]"
+                            : "text-gray-400"
+                      }`}
+                    >
+                      {day.label}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

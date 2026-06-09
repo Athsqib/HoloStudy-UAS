@@ -8,9 +8,12 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCw,
+  CheckCircle,
 } from "lucide-react";
 import { CreateFlashcard } from "./CreateFlashcard";
 import type { FlashcardSet, Project, FlexibleCard } from "../types";
+import { db, auth } from "../lib/firebase";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 interface SetDetailProps {
   set: FlashcardSet;
@@ -23,6 +26,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
   // Toggle State
   const [isEditing, setIsEditing] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   // Flashcard Viewer States
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,21 +39,80 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
   const backText =
     currentCard?.back || currentCard?.definition || "No Back Text";
 
+  const isLastCard = currentIndex === set.cards.length - 1;
+
   const handleNext = useCallback(() => {
+    if (currentIndex === set.cards.length - 1) return;
     setIsFlipped(false);
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % set.cards.length);
     }, 150);
-  }, [set.cards.length]);
+  }, [currentIndex, set.cards.length]);
 
   const handlePrev = useCallback(() => {
+    if (currentIndex === 0) return;
     setIsFlipped(false);
     setTimeout(() => {
-      setCurrentIndex(
-        (prev) => (prev - 1 + set.cards.length) % set.cards.length,
-      );
+      setCurrentIndex((prev) => prev - 1);
     }, 150);
-  }, [set.cards.length]);
+  }, [currentIndex]);
+
+  const handleFinishSet = async () => {
+    setIsFinishing(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        // Get current date in local YYYY-MM-DD format so midnight resets perfectly
+        const d = new Date();
+        const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          const lastDateStr = data.lastStudyDate;
+
+          // Only update if they haven't already studied today
+          if (lastDateStr !== todayStr) {
+            const todayDate = new Date(todayStr);
+            const lastDate = new Date(lastDateStr || "2000-01-01");
+            const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            let newStreak = data.streakCount || 0;
+
+            if (diffDays === 1) {
+              // Studied yesterday, streak continues!
+              newStreak += 1;
+            } else if (diffDays > 1) {
+              // Missed a day, streak resets to 1
+              newStreak = 1;
+            }
+
+            await updateDoc(userRef, {
+              streakCount: newStreak,
+              lastStudyDate: todayStr,
+            });
+          }
+        } else {
+          // First time they are completing a set, initialize their profile
+          await setDoc(userRef, {
+            userId: user.uid,
+            streakCount: 1,
+            lastStudyDate: todayStr,
+          });
+        }
+      }
+
+      // Route back to the library/dashboard after saving the streak
+      navigate("/library");
+    } catch (error) {
+      console.error("Error updating streak:", error);
+    } finally {
+      setIsFinishing(false);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -166,12 +229,24 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
-              <button
-                onClick={handleNext}
-                className="w-14 h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
+
+              {isLastCard ? (
+                <button
+                  onClick={handleFinishSet}
+                  disabled={isFinishing}
+                  className="h-14 px-8 rounded-full bg-[#656799] text-white font-bold flex items-center gap-2 hover:bg-[#545685] transition-all active:scale-95 shadow-md shadow-indigo-900/10 disabled:opacity-70 disabled:cursor-wait"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  {isFinishing ? "Saving..." : "Finish Set"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="w-14 h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
             </div>
           </div>
         ) : (

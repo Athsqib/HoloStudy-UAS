@@ -30,3 +30,9 @@ export type FlexibleCard = {
   back?: string;
   definition?: string;
 };
+
+export interface UserProfile {
+  userId: string;
+  streakCount: number;
+  lastStudyDate?: string;
+}
