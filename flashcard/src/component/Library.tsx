@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Clock, MoreVertical, Trash2 } from "lucide-react";
 import type { FlashcardSet, Project } from "../types";
@@ -19,6 +20,16 @@ export const Library = ({
   onOpenSet,
   onDeleteSet,
 }: LibraryProps) => {
+  // 1. Add state for the click-to-open menu
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // Close the menu if the user clicks anywhere else on the screen
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   const {
     searchQuery,
     setSearchQuery,
@@ -33,6 +44,26 @@ export const Library = ({
   );
 
   const totalCards = sets.reduce((acc, set) => acc + set.cards.length, 0);
+
+  // 2. Calculate the most recent study date dynamically
+  const sortedDates = sets
+    .map((s) => s.lastStudied)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime());
+
+  const mostRecentDate = sortedDates.length > 0 ? sortedDates[0] : null;
+
+  const formatLastStudied = (dateString: string | null | undefined) => {
+    if (!dateString) return "Not yet";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "Not yet";
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-64px)] w-full p-4 lg:p-6 overflow-hidden">
@@ -74,7 +105,7 @@ export const Library = ({
             </div>
             <div className="text-center">
               <span className="block text-4xl font-bold text-[#7b81ff] mb-1">
-                Not yet
+                {formatLastStudied(mostRecentDate)}
               </span>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Last Studied
@@ -100,7 +131,7 @@ export const Library = ({
             >
               <div
                 onClick={onCreateFirst}
-                className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group ${
+                className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group cursor-pointer ${
                   viewMode === "grid"
                     ? "flex-col h-64"
                     : "flex-row h-24 px-8 w-full justify-start"
@@ -137,27 +168,36 @@ export const Library = ({
                           <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
                             <BookOpen className="w-6 h-6" />
                           </div>
-                          <div className="relative group/menu">
+
+                          {/* 3. Updated click-based menu for Grid view */}
+                          <div className="relative">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setActiveMenuId(
+                                  activeMenuId === set.id ? null : set.id,
+                                );
                               }}
                               className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
                             >
                               <MoreVertical className="w-5 h-5" />
                             </button>
-                            <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteSet(set.id);
-                                }}
-                                className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Delete Set
-                              </button>
-                            </div>
+
+                            {activeMenuId === set.id && (
+                              <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    onDeleteSet(set.id);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete Set
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
@@ -219,27 +259,35 @@ export const Library = ({
                             Open Set
                           </span>
 
-                          <div className="relative group/menu">
+                          {/* 4. Updated click-based menu for List view */}
+                          <div className="relative">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setActiveMenuId(
+                                  activeMenuId === set.id ? null : set.id,
+                                );
                               }}
                               className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
                             >
                               <MoreVertical className="w-5 h-5" />
                             </button>
-                            <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteSet(set.id);
-                                }}
-                                className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Delete Set
-                              </button>
-                            </div>
+
+                            {activeMenuId === set.id && (
+                              <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(null);
+                                    onDeleteSet(set.id);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete Set
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </>

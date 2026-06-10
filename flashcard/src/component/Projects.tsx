@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Folder,
@@ -38,6 +38,16 @@ export const Projects = ({
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
+
+  // 1. State for click-based dropdown menus
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // 2. Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuId(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
   const projectSets = sets.filter((s) => s.projectId === selectedProjectId);
@@ -224,31 +234,42 @@ export const Projects = ({
                       }`}
                     >
                       {projectViewMode === "grid" ? (
-                        // Grid Layout
+                        // Project Grid Layout
                         <>
                           <div className="flex justify-between items-start mb-6">
                             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
                               <LayoutGrid className="w-6 h-6" />
                             </div>
-                            <div className="relative group/menu">
+                            {/* Project Grid Menu Fix */}
+                            <div className="relative">
                               <button
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-2 text-gray-300 hover:text-gray-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(
+                                    activeMenuId === `project-${project.id}`
+                                      ? null
+                                      : `project-${project.id}`,
+                                  );
+                                }}
+                                className="p-2 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
                               >
                                 <MoreVertical className="w-5 h-5" />
                               </button>
-                              <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteProject(project.id);
-                                  }}
-                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Delete
-                                </button>
-                              </div>
+                              {activeMenuId === `project-${project.id}` && (
+                                <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-[140px]">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(null);
+                                      onDeleteProject(project.id);
+                                    }}
+                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete Project
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
@@ -271,7 +292,7 @@ export const Projects = ({
                           </div>
                         </>
                       ) : (
-                        // List Layout
+                        // Project List Layout
                         <>
                           <div className="w-14 h-14 shrink-0 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
                             <LayoutGrid className="w-6 h-6" />
@@ -292,25 +313,36 @@ export const Projects = ({
                               }{" "}
                               Sets
                             </span>
-                            <div className="relative group/menu">
+                            {/* Project List Menu Fix */}
+                            <div className="relative">
                               <button
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-2 text-gray-300 hover:text-gray-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(
+                                    activeMenuId === `project-${project.id}`
+                                      ? null
+                                      : `project-${project.id}`,
+                                  );
+                                }}
+                                className="p-2 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
                               >
                                 <MoreVertical className="w-5 h-5" />
                               </button>
-                              <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-20">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteProject(project.id);
-                                  }}
-                                  className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  Delete
-                                </button>
-                              </div>
+                              {activeMenuId === `project-${project.id}` && (
+                                <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveMenuId(null);
+                                      onDeleteProject(project.id);
+                                    }}
+                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Delete Project
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </>
@@ -383,30 +415,42 @@ export const Projects = ({
                         }`}
                       >
                         {setViewMode === "grid" ? (
+                          // Set Grid Layout
                           <>
                             <div className="flex justify-between items-start mb-4">
                               <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
                                 <BookOpen className="w-6 h-6" />
                               </div>
-                              <div className="relative group/setmenu">
+                              {/* Set Grid Menu Fix */}
+                              <div className="relative">
                                 <button
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(
+                                      activeMenuId === `set-${set.id}`
+                                        ? null
+                                        : `set-${set.id}`,
+                                    );
+                                  }}
+                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
                                 >
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
-                                <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/setmenu:opacity-100 group-hover/setmenu:visible transition-all z-20">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onDeleteSet(set.id);
-                                    }}
-                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete Set
-                                  </button>
-                                </div>
+                                {activeMenuId === `set-${set.id}` && (
+                                  <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-[140px]">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                        onDeleteSet(set.id);
+                                      }}
+                                      className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2 whitespace-nowrap"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      Delete Set
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
@@ -426,6 +470,7 @@ export const Projects = ({
                             </div>
                           </>
                         ) : (
+                          // Set List Layout
                           <>
                             <div className="w-14 h-14 shrink-0 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
                               <BookOpen className="w-6 h-6" />
@@ -443,25 +488,36 @@ export const Projects = ({
                                 <Clock className="w-4 h-4" />
                                 <span>{set.cards.length} Cards</span>
                               </div>
-                              <div className="relative group/setmenu">
+                              {/* Set List Menu Fix */}
+                              <div className="relative">
                                 <button
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuId(
+                                      activeMenuId === `set-${set.id}`
+                                        ? null
+                                        : `set-${set.id}`,
+                                    );
+                                  }}
+                                  className="p-2 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
                                 >
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
-                                <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl opacity-0 invisible group-hover/setmenu:opacity-100 group-hover/setmenu:visible transition-all z-20">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onDeleteSet(set.id);
-                                    }}
-                                    className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Delete Set
-                                  </button>
-                                </div>
+                                {activeMenuId === `set-${set.id}` && (
+                                  <div className="absolute top-10 right-0 w-36 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(null);
+                                        onDeleteSet(set.id);
+                                      }}
+                                      className="w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      Delete Set
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </>

@@ -79,7 +79,7 @@ export const Dashboard = ({
             try {
               let lastDate: Date;
 
-              // 1. Check if it's a String FIRST (TypeScript likes this better)
+              // 1. Check if it's a String FIRST
               if (typeof savedDate === "string") {
                 if (savedDate.includes("-")) {
                   const [year, month, day] = savedDate.split("-");
@@ -92,16 +92,19 @@ export const Dashboard = ({
                   lastDate = new Date(savedDate);
                 }
               }
-              // 2. Safely check if it's a Firebase Timestamp using 'as any' to silence TS
+              // 2. Safely check if it's an object with a toDate function (Firebase Timestamp)
+              // By checking 'typeof === "object"' and '"toDate" in', TS knows it's safe.
               else if (
                 savedDate &&
-                typeof (savedDate as any).toDate === "function"
+                typeof savedDate === "object" &&
+                "toDate" in savedDate
               ) {
-                lastDate = (savedDate as any).toDate();
+                // We cast it to a specific inline type instead of 'any' to satisfy ESLint
+                lastDate = (savedDate as { toDate: () => Date }).toDate();
               }
               // 3. Fallback for any other number format
               else {
-                lastDate = new Date(savedDate as unknown as number);
+                lastDate = new Date(savedDate as number);
               }
 
               // Make sure the date is valid before checking it

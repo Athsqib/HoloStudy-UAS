@@ -31,6 +31,7 @@ import { ProtectedSetRoute } from "./component/ProtectedSetRoute";
 import { ProtectedProjectRoute } from "./component/ProtectedProjectRoute";
 import { ProjectDetail } from "./component/ProjectDetail";
 import { ConfirmModal } from "./component/ConfirmModal";
+import { Footer } from "./component/Footer";
 
 export default function App() {
   const navigate = useNavigate();
@@ -381,6 +382,7 @@ export default function App() {
                   />
                   <main className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar pb-16 md:pb-0">
                     {renderContent()}
+                    <Footer />
                   </main>
                 </div>
               </div>
