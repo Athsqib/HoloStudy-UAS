@@ -37,5 +37,6 @@ export interface UserProfile {
   userId: string;
   streakCount: number;
   lastStreakDate?: Timestamp;
+  lastStudyDate?: string;
   hasCompletedToday?: boolean;
 }

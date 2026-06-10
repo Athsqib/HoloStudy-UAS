@@ -13,7 +13,7 @@ import type { FlashcardSet, UserProfile } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
 import { SelectDropdown } from "./SelectDropdown";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 export const Dashboard = ({
@@ -55,42 +55,56 @@ export const Dashboard = ({
   }));
 
   useEffect(() => {
-    const fetchUserStreak = async () => {
-      if (!user?.uid) return;
+    if (!user?.uid) return;
 
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+    const userRef = doc(db, "users", user.uid);
 
+    // Listen for real-time updates so the UI never gets stuck
+    const unsubscribe = onSnapshot(
+      userRef,
+      (userSnap) => {
         if (userSnap.exists()) {
           const userData = userSnap.data() as UserProfile;
 
-          // Jika akun lama tidak punya streakCount, default ke 0
+          // Default to 0 if streakCount doesn't exist
           setCurrentStreak(userData.streakCount || 0);
 
           let completed = false;
 
-          // Memastikan lastStreakDate ada sebelum memprosesnya
-          if (userData.lastStreakDate) {
+          // FIX: Look for 'lastStudyDate' (which SetDetail saves)
+          // Fallback to 'lastStreakDate' just in case old accounts use it
+          const savedDate = userData.lastStudyDate || userData.lastStreakDate;
+
+          if (savedDate) {
             try {
               let lastDate: Date;
 
-              if (typeof userData.lastStreakDate.toDate === "function") {
-                lastDate = userData.lastStreakDate.toDate(); // Format Timestamp
-              } else {
-                // Change ‘any’ to ‘unknown’ and then check the type
-                const rawDate: unknown = userData.lastStreakDate;
-                if (
-                  typeof rawDate === "string" ||
-                  typeof rawDate === "number"
-                ) {
-                  lastDate = new Date(rawDate);
+              // 1. Check if it's a String FIRST (TypeScript likes this better)
+              if (typeof savedDate === "string") {
+                if (savedDate.includes("-")) {
+                  const [year, month, day] = savedDate.split("-");
+                  lastDate = new Date(
+                    Number(year),
+                    Number(month) - 1,
+                    Number(day),
+                  );
                 } else {
-                  lastDate = new Date(0); // Default date if the format is not recognized
+                  lastDate = new Date(savedDate);
                 }
               }
+              // 2. Safely check if it's a Firebase Timestamp using 'as any' to silence TS
+              else if (
+                savedDate &&
+                typeof (savedDate as any).toDate === "function"
+              ) {
+                lastDate = (savedDate as any).toDate();
+              }
+              // 3. Fallback for any other number format
+              else {
+                lastDate = new Date(savedDate as unknown as number);
+              }
 
-              // Make sure the date is valid (not NaN) before checking it
+              // Make sure the date is valid before checking it
               if (!isNaN(lastDate.getTime())) {
                 const today = new Date();
 
@@ -103,18 +117,20 @@ export const Dashboard = ({
                 }
               }
             } catch (err) {
-              console.error("Gagal memproses data streak akun lama:", err);
+              console.error("Gagal memproses data streak:", err);
             }
           }
 
           setHasCompletedToday(completed);
         }
-      } catch (error) {
+      },
+      (error) => {
         console.error("Error fetching user streak:", error);
-      }
-    };
+      },
+    );
 
-    fetchUserStreak();
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
   }, [user]);
 
   const maxStreakDisplay = 7;
