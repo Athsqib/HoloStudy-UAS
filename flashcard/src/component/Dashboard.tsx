@@ -64,24 +64,46 @@ export const Dashboard = ({
 
         if (userSnap.exists()) {
           const userData = userSnap.data() as UserProfile;
+
+          // Jika akun lama tidak punya streakCount, default ke 0
           setCurrentStreak(userData.streakCount || 0);
 
           let completed = false;
 
-          // Check if the streak was already registered today!
+          // Memastikan lastStreakDate ada sebelum memprosesnya
           if (userData.lastStreakDate) {
-            // Handle both Firestore Timestamps and ISO strings safely
-            const lastDate = userData.lastStreakDate.toDate();
+            try {
+              let lastDate: Date;
 
-            const today = new Date();
+              if (typeof userData.lastStreakDate.toDate === "function") {
+                lastDate = userData.lastStreakDate.toDate(); // Format Timestamp
+              } else {
+                // Change ‘any’ to ‘unknown’ and then check the type
+                const rawDate: unknown = userData.lastStreakDate;
+                if (
+                  typeof rawDate === "string" ||
+                  typeof rawDate === "number"
+                ) {
+                  lastDate = new Date(rawDate);
+                } else {
+                  lastDate = new Date(0); // Default date if the format is not recognized
+                }
+              }
 
-            // If the last activity was today, set our flag to true
-            if (
-              lastDate.getDate() === today.getDate() &&
-              lastDate.getMonth() === today.getMonth() &&
-              lastDate.getFullYear() === today.getFullYear()
-            ) {
-              completed = true;
+              // Make sure the date is valid (not NaN) before checking it
+              if (!isNaN(lastDate.getTime())) {
+                const today = new Date();
+
+                if (
+                  lastDate.getDate() === today.getDate() &&
+                  lastDate.getMonth() === today.getMonth() &&
+                  lastDate.getFullYear() === today.getFullYear()
+                ) {
+                  completed = true;
+                }
+              }
+            } catch (err) {
+              console.error("Gagal memproses data streak akun lama:", err);
             }
           }
 
@@ -126,7 +148,6 @@ export const Dashboard = ({
     );
 
     let isPartOfStreak;
-
     if (hasCompletedToday) {
       isPartOfStreak =
         distanceFromToday >= 0 && distanceFromToday < currentStreak;
