@@ -168,8 +168,10 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-2xl font-bold text-[#1a1a4b]">{set.title}</h2>
-              <p className="text-sm text-gray-400 font-medium">
+              <h2 className="text-xl font-bold text-[#1a1a4b] w-full wrap-break-word whitespace-pre-wrap">
+                {set.title}
+              </h2>
+              <p className="text-sm text-gray-400 font-medium w-full wrap-break-word whitespace-pre-wrap">
                 {set.description}
               </p>
             </div>
@@ -204,7 +206,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               >
                 {/* Front */}
                 <div className="absolute inset-0 w-full h-full backface-hidden bg-white border-2 border-gray-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center group-hover:border-indigo-100 transition-colors">
-                  <h3 className="text-3xl font-bold text-[#2d2d66]">
+                  <h3 className="text-3xl font-bold text-[#2d2d66] w-full wrap-break-word whitespace-pre-wrap">
                     {frontText}
                   </h3>
                   <div className="absolute bottom-6 right-6 text-gray-300 group-hover:text-indigo-300 transition-colors">
@@ -214,7 +216,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
                 {/* Back */}
                 <div className="absolute inset-0 w-full h-full backface-hidden bg-indigo-50 border-2 border-indigo-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center transform-[rotateX(180deg)]">
-                  <p className="text-2xl font-medium text-indigo-900 leading-relaxed">
+                  <p className="text-2xl font-medium text-indigo-900 leading-relaxed w-full wrap-break-word whitespace-pre-wrap">
                     {backText}
                   </p>
                 </div>

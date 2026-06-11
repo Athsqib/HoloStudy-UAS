@@ -142,7 +142,7 @@ export const Projects = ({
                 </div>
 
                 {/* Filter and View Toggle */}
-                <div className="w-full flex justify-center mb-12">
+                <div className="w-full flex justify-center">
                   <FilterBar
                     searchQuery={projectSearchQuery}
                     onSearchChange={setProjectSearchQuery}
@@ -256,7 +256,7 @@ export const Projects = ({
                                 <MoreVertical className="w-5 h-5" />
                               </button>
                               {activeMenuId === `project-${project.id}` && (
-                                <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-[140px]">
+                                <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-35">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -272,10 +272,10 @@ export const Projects = ({
                               )}
                             </div>
                           </div>
-                          <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
+                          <h3 className="text-xl font-bold text-[#1a1a4b] mb-2 truncate">
                             {project.title}
                           </h3>
-                          <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
+                          <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2 truncate">
                             {project.description}
                           </p>
                           <div className="mt-auto flex items-center justify-between text-xs font-bold text-gray-400">
@@ -297,15 +297,15 @@ export const Projects = ({
                           <div className="w-14 h-14 shrink-0 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
                             <LayoutGrid className="w-6 h-6" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-xl font-bold text-[#1a1a4b] mb-1 truncate">
+                          <div className="flex-1 min-w-6">
+                            <h3 className="text-xl font-bold text-[#1a1a4b] mb-1 truncate ">
                               {project.title}
                             </h3>
                             <p className="text-sm text-gray-400 font-medium truncate">
                               {project.description}
                             </p>
                           </div>
-                          <div className="flex items-center gap-8 shrink-0">
+                          <div className="flex items-center gap-6 shrink-0">
                             <span className="text-xs font-bold text-gray-400 w-24 text-right">
                               {
                                 sets.filter((s) => s.projectId === project.id)
@@ -437,7 +437,7 @@ export const Projects = ({
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
                                 {activeMenuId === `set-${set.id}` && (
-                                  <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-[140px]">
+                                  <div className="absolute top-10 right-0 bg-white border border-gray-100 rounded-xl py-2 shadow-xl transition-all z-20 min-w-35">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();

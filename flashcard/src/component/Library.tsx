@@ -200,10 +200,10 @@ export const Library = ({
                             )}
                           </div>
                         </div>
-                        <h3 className="text-xl font-bold text-[#1a1a4b] mb-2">
+                        <h3 className="text-xl font-bold text-[#1a1a4b] mb-2 truncate">
                           {set.title}
                         </h3>
-                        <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2">
+                        <p className="text-sm text-gray-400 font-medium mb-6 line-clamp-2 truncate">
                           {set.description}
                         </p>
 
