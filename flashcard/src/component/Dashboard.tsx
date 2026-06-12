@@ -190,10 +190,10 @@ export const Dashboard = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-white border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-6xl mx-auto p-10 lg:p-14">
+        <div className="max-w-6xl mx-auto p-4 sm:p-10 lg:p-14">
           {/* Welcome Header */}
-          <div className="mb-10">
-            <h2 className="text-3xl font-bold text-[#2d2d66] mb-2 font-display">
+          <div className="mb-6 sm:mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#2d2d66] mb-2 font-display">
               Welcome back, {displayName}
             </h2>
             <p className="text-gray-500 font-medium">
@@ -206,7 +206,7 @@ export const Dashboard = ({
           {/* Status Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
             {/* Main Featured Card - Dynamic Goal Selector */}
-            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-4xl p-10 relative flex flex-col justify-between min-h-80 group transition-all hover:shadow-xl hover:shadow-blue-900/5">
+            <div className="lg:col-span-2 bg-[#f4f7fe] rounded-4xl p-4 sm:p-10 relative flex flex-col justify-between min-h-80 group transition-all hover:shadow-xl hover:shadow-blue-900/5">
               <div className="relative z-10 w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center gap-3">
@@ -268,7 +268,7 @@ export const Dashboard = ({
                   )}
                 </div>
 
-                <h3 className="text-4xl font-bold text-[#2d2d66] mb-4 max-w-md leading-tight line-clamp-2">
+                <h3 className="text-2xl sm:text-4xl font-bold text-[#2d2d66] mb-4 max-w-md leading-tight line-clamp-2 wrap-break-word whitespace-pre-wrap break-all">
                   {activeGoalSet
                     ? `Master "${activeGoalSet.title}"`
                     : "Set Your Daily Goal"}
@@ -276,7 +276,7 @@ export const Dashboard = ({
 
                 <p className="text-gray-500 font-medium max-w-90 mb-8 leading-relaxed line-clamp-3">
                   {activeGoalSet
-                    ? `Keep reviewing this set to hit your goal of ${dailyTarget} cards today. ${activeGoalSet.description}`
+                    ? `Keep reviewing this set to hit your goal of ${dailyTarget} cards today.`
                     : "Create your first flashcard set to start setting and tracking your learning goals!"}
                 </p>
 

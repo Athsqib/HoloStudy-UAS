@@ -50,6 +50,11 @@ export default function App() {
     id: string | null;
   }>({ isOpen: false, type: null, id: null });
 
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    message: string;
+  }>({ isOpen: false, message: "" });
+
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -130,10 +135,12 @@ export default function App() {
         s.id !== set.id,
     );
     if (isDuplicate) {
-      alert(
-        "A flashcard set with this name already exists! Please choose a different name.",
-      );
-      return; // Stops the save process so the user can rename it
+      setAlertModal({
+        isOpen: true,
+        message:
+          "A flashcard set with this name already exists! Please choose a different name.",
+      });
+      return;
     }
     try {
       const setToSave = { ...set, userId: user.uid };
@@ -390,6 +397,15 @@ export default function App() {
           }
         />
       </Routes>
+
+      <ConfirmModal
+        hideCancel
+        isOpen={alertModal.isOpen}
+        title="Duplicate Name"
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ isOpen: false, message: "" })}
+        onCancel={() => setAlertModal({ isOpen: false, message: "" })}
+      />
 
       <ConfirmModal
         isOpen={deleteModal.isOpen}

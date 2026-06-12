@@ -14,6 +14,7 @@ import type { Project, FlashcardSet } from "../types";
 import { useViewControls } from "../hooks/useViewControls";
 import { FilterBar } from "./FilterBar";
 import { useNavigate } from "react-router-dom";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface ProjectsProps {
   projects: Project[];
@@ -32,6 +33,7 @@ export const Projects = ({
   onDeleteProject,
   onDeleteSet,
 }: ProjectsProps) => {
+  const [alertMsg, setAlertMsg] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -91,7 +93,7 @@ export const Projects = ({
     );
 
     if (isDuplicate) {
-      alert(
+      setAlertMsg(
         "A project folder with this name already exists! Please choose a different name.",
       );
       return;
@@ -118,7 +120,7 @@ export const Projects = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#fafbfc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-16 px-8">
+        <div className="max-w-5xl mx-auto py-8 sm:py-16 px-4 sm:px-8">
           <AnimatePresence mode="wait">
             {!selectedProjectId ? (
               <motion.div
@@ -129,11 +131,11 @@ export const Projects = ({
                 className="flex flex-col items-center"
               >
                 {/* Header */}
-                <div className="text-center mb-12">
-                  <div className="w-16 h-16 bg-[#edf2f7] rounded-3xl flex items-center justify-center text-[#4d51a3] mx-auto mb-6">
-                    <Folder className="w-8 h-8" />
+                <div className="text-center mb-8 sm:mb-12">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#edf2f7] rounded-3xl flex items-center justify-center text-[#4d51a3] mx-auto mb-4 sm:mb-6">
+                    <Folder className="w-6 sm:w-8 h-6 sm:h-8" />
                   </div>
-                  <h2 className="text-4xl font-bold text-[#1a1a4b] mb-3">
+                  <h2 className="text-2xl sm:text-4xl font-bold text-[#1a1a4b] mb-3">
                     Project Folders
                   </h2>
                   <p className="text-gray-500 font-medium tracking-tight">
@@ -297,7 +299,7 @@ export const Projects = ({
                           <div className="w-14 h-14 shrink-0 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
                             <LayoutGrid className="w-6 h-6" />
                           </div>
-                          <div className="flex-1 min-w-6">
+                          <div className="flex-1 min-w-2">
                             <h3 className="text-xl font-bold text-[#1a1a4b] mb-1 truncate ">
                               {project.title}
                             </h3>
@@ -305,8 +307,8 @@ export const Projects = ({
                               {project.description}
                             </p>
                           </div>
-                          <div className="flex items-center gap-6 shrink-0">
-                            <span className="text-xs font-bold text-gray-400 w-24 text-right">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs font-bold text-gray-400 w-12 text-right">
                               {
                                 sets.filter((s) => s.projectId === project.id)
                                   .length
@@ -324,7 +326,7 @@ export const Projects = ({
                                       : `project-${project.id}`,
                                   );
                                 }}
-                                className="p-2 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
+                                className="p-1 text-gray-300 hover:text-gray-600 transition-colors rounded-lg"
                               >
                                 <MoreVertical className="w-5 h-5" />
                               </button>
@@ -541,6 +543,15 @@ export const Projects = ({
           </AnimatePresence>
         </div>
       </motion.div>
+
+      <ConfirmModal
+        hideCancel
+        isOpen={!!alertMsg}
+        title="Duplicate Name"
+        message={alertMsg}
+        onConfirm={() => setAlertMsg("")}
+        onCancel={() => setAlertMsg("")}
+      />
     </div>
   );
 };

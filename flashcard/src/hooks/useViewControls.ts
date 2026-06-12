@@ -5,7 +5,9 @@ export function useViewControls<T>(
   filterFn: (item: T, query: string) => boolean,
 ) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() =>
+    window.innerWidth < 768 ? "list" : "grid",
+  );
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items;

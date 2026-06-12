@@ -27,6 +27,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
   // Toggle State
   const [isEditing, setIsEditing] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Flashcard Viewer States
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -105,6 +106,9 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
         }
       }
 
+      const setRef = doc(db, "flashcardSets", set.id);
+      await updateDoc(setRef, { lastStudied: new Date().toISOString() });
+
       // Route back to the library/dashboard after saving the streak
       navigate("/library");
     } catch (error) {
@@ -159,21 +163,35 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
         className="w-full max-w-4xl h-full bg-[#fafbfc] border border-gray-100 rounded-[40px] shadow-sm flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-          <div className="flex items-center gap-6">
+        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+          <div className="flex items-center gap-6 min-w-0 flex-1">
             <button
               onClick={() => navigate("/library")}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h2 className="text-xl font-bold text-[#1a1a4b] w-full wrap-break-word whitespace-pre-wrap">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-[#1a1a4b] w-full wrap-break-word whitespace-pre-wrap">
                 {set.title}
               </h2>
-              <p className="text-sm text-gray-400 font-medium w-full wrap-break-word whitespace-pre-wrap">
-                {set.description}
-              </p>
+              {set.description.length > 50 ? (
+                <p
+                  className="text-sm text-gray-400 font-medium wrap-break-word whitespace-pre-wrap cursor-pointer"
+                  onClick={() => setDescExpanded(!descExpanded)}
+                >
+                  {descExpanded
+                    ? set.description
+                    : `${set.description.slice(0, 50)}... `}
+                  <span className="text-indigo-400 font-bold text-xs hover:underline">
+                    {descExpanded ? "Read less" : "Read more"}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400 font-medium wrap-break-word whitespace-pre-wrap">
+                  {set.description}
+                </p>
+              )}
             </div>
           </div>
 
@@ -188,15 +206,15 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
         {/* Study Area */}
         {set.cards.length > 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8">
-            <div className="text-sm font-bold text-gray-400 mb-8 uppercase tracking-widest flex items-center gap-2">
+          <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+            <div className="text-sm font-bold text-gray-400 mb-6 sm:mb-8 uppercase tracking-widest flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
               Card {currentIndex + 1} of {set.cards.length}
             </div>
 
             {/* The Flashcard */}
             <div
-              className="relative w-full max-w-2xl h-80 perspective-1000 cursor-pointer group"
+              className="relative w-full max-w-2xl h-56 sm:h-80 perspective-1000 cursor-pointer group"
               onClick={() => setIsFlipped(!isFlipped)}
             >
               <motion.div
@@ -205,8 +223,8 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
               >
                 {/* Front */}
-                <div className="absolute inset-0 w-full h-full backface-hidden bg-white border-2 border-gray-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center group-hover:border-indigo-100 transition-colors">
-                  <h3 className="text-3xl font-bold text-[#2d2d66] w-full wrap-break-word whitespace-pre-wrap">
+                <div className="absolute inset-0 w-full h-full backface-hidden bg-white border-2 border-gray-100 rounded-3xl shadow-lg flex items-center justify-center p-6 sm:p-12 text-center group-hover:border-indigo-100 transition-colors">
+                  <h3 className="text-xl sm:text-3xl font-bold text-[#2d2d66] w-full wrap-break-word whitespace-pre-wrap">
                     {frontText}
                   </h3>
                   <div className="absolute bottom-6 right-6 text-gray-300 group-hover:text-indigo-300 transition-colors">
@@ -215,8 +233,8 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
                 </div>
 
                 {/* Back */}
-                <div className="absolute inset-0 w-full h-full backface-hidden bg-indigo-50 border-2 border-indigo-100 rounded-3xl shadow-lg flex items-center justify-center p-12 text-center transform-[rotateX(180deg)]">
-                  <p className="text-2xl font-medium text-indigo-900 leading-relaxed w-full wrap-break-word whitespace-pre-wrap">
+                <div className="absolute inset-0 w-full h-full backface-hidden bg-indigo-50 border-2 border-indigo-100 rounded-3xl shadow-lg flex items-center justify-center p-6 sm:p-12 text-center transform-[rotateX(180deg)]">
+                  <p className="text-xl sm:text-2xl font-medium text-indigo-900 leading-relaxed w-full wrap-break-word whitespace-pre-wrap">
                     {backText}
                   </p>
                 </div>
@@ -224,19 +242,19 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-8 mt-12">
+            <div className="flex items-center gp-6 sm:gap-8 mt-6 sm:mt-12">
               <button
                 onClick={handlePrev}
-                className="w-14 h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 sm:w-6 h-5 sm:h-6" />
               </button>
 
               {isLastCard ? (
                 <button
                   onClick={handleFinishSet}
                   disabled={isFinishing}
-                  className="h-14 px-8 rounded-full bg-[#656799] text-white font-bold flex items-center gap-2 hover:bg-[#545685] transition-all active:scale-95 shadow-md shadow-indigo-900/10 disabled:opacity-70 disabled:cursor-wait"
+                  className="h-12 sm:h-14 px-6 sm:px-8 rounded-full bg-[#656799] text-white font-bold flex items-center gap-2 hover:bg-[#545685] transition-all active:scale-95 shadow-md shadow-indigo-900/10 disabled:opacity-70 disabled:cursor-wait"
                 >
                   <CheckCircle className="w-5 h-5" />
                   {isFinishing ? "Saving..." : "Finish Set"}
@@ -244,9 +262,9 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               ) : (
                 <button
                   onClick={handleNext}
-                  className="w-14 h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-md transition-all active:scale-95"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 sm:w-6 h-5 sm:h-6" />
                 </button>
               )}
             </div>

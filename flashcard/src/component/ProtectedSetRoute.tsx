@@ -1,6 +1,8 @@
-import { useParams, Navigate } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import type { User } from "firebase/auth";
 import type { FlashcardSet } from "../types";
+import { ConfirmModal } from "./ConfirmModal";
 
 export const ProtectedSetRoute = ({
   sets,
@@ -11,21 +13,30 @@ export const ProtectedSetRoute = ({
   user: User | null;
   children: (set: FlashcardSet) => React.ReactNode;
 }) => {
+  const navigate = useNavigate();
   const { setId } = useParams<{ setId: string }>();
   const requestedSet = sets.find((set) => set.id === setId);
 
-  // If the set doesn't exist, or doesn't belong to the user (since the query only fetched their sets)
-  if (!requestedSet) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const isMissing = !requestedSet;
+  const isUnauthorized = !!requestedSet && requestedSet.userId !== user?.uid;
+  const [showAlert] = useState(isMissing || isUnauthorized);
 
-  // Extra frontend authorization check
-  if (requestedSet.userId !== user?.uid) {
-    alert(
-      "Unauthorized: You do not have permission to view this flashcard set.",
+  const message = isMissing
+    ? "This flashcard set was not found."
+    : "You do not have permission to view this flashcard set.";
+
+  if (showAlert) {
+    return (
+      <ConfirmModal
+        hideCancel
+        isOpen
+        title="Not Found"
+        message={message}
+        onConfirm={() => navigate("/dashboard", { replace: true })}
+        onCancel={() => navigate("/dashboard", { replace: true })}
+      />
     );
-    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children(requestedSet)}</>;
+  return <>{children(requestedSet!)}</>;
 };

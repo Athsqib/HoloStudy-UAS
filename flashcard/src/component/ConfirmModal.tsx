@@ -9,7 +9,8 @@ interface ConfirmModalProps {
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
-  isDestructive?: boolean; // If true, makes the button red. If false, makes it your primary indigo theme.
+  isDestructive?: boolean;
+  hideCancel?: boolean;
 }
 
 export const ConfirmModal = ({
@@ -18,10 +19,13 @@ export const ConfirmModal = ({
   message,
   onConfirm,
   onCancel,
-  confirmText = "Delete",
+  confirmText,
   cancelText = "Cancel",
-  isDestructive = true,
+  isDestructive,
+  hideCancel = false,
 }: ConfirmModalProps) => {
+  const resolvedConfirmText = confirmText ?? (hideCancel ? "OK" : "Delete");
+  const resolvedDestructive = isDestructive ?? !hideCancel;
   return (
     <AnimatePresence>
       {isOpen && (
@@ -46,7 +50,7 @@ export const ConfirmModal = ({
               <div className="flex items-center gap-4 mb-3">
                 <div
                   className={`p-3 rounded-2xl shrink-0 ${
-                    isDestructive
+                    resolvedDestructive
                       ? "bg-red-50 text-red-500"
                       : "bg-indigo-50 text-[#6c7df3]"
                   }`}
@@ -61,6 +65,14 @@ export const ConfirmModal = ({
               </p>
 
               <div className="flex gap-3">
+                {!hideCancel && (
+                  <button
+                    onClick={onCancel}
+                    className="flex-1 py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  >
+                    {cancelText}
+                  </button>
+                )}
                 <button
                   onClick={onCancel}
                   className="flex-1 py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-gray-200"
@@ -69,13 +81,13 @@ export const ConfirmModal = ({
                 </button>
                 <button
                   onClick={onConfirm}
-                  className={`flex-1 py-3 px-4 rounded-2xl font-bold text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    isDestructive
+                  className={`${hideCancel ? "w-full" : "flex-1"} py-3 px-4 rounded-2xl font-bold text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    resolvedDestructive
                       ? "bg-red-500 hover:bg-red-600 focus:ring-red-500 shadow-lg shadow-red-500/20"
                       : "bg-[#6c7df3] hover:bg-[#5a6be0] focus:ring-[#6c7df3] shadow-lg shadow-indigo-900/20"
                   }`}
                 >
-                  {confirmText}
+                  {resolvedConfirmText}
                 </button>
               </div>
             </div>

@@ -26,9 +26,9 @@ export const ProjectDetail = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#fafbfc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto"
       >
-        <div className="max-w-4xl mx-auto py-12 px-8">
+        <div className="max-w-4xl mx-auto py-6 sm:py-12 px-4 sm:px-8">
           {/* Header */}
-          <div className="flex items-center gap-6 mb-10">
+          <div className="flex items-center gap-4 sm:gap-6 mb-8 sm:mb-10">
             <button
               onClick={() => navigate("/projects")}
               className="p-3 bg-white rounded-full text-gray-400 hover:text-gray-600 shadow-sm border border-gray-100"
@@ -36,10 +36,12 @@ export const ProjectDetail = ({
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h2 className="text-3xl font-bold text-[#1a1a4b]">
+              <h2 className="text-xl sm:text-3xl font-bold text-[#1a1a4b] wrap-break-words break-all">
                 {project.title}
               </h2>
-              <p className="text-gray-400 font-medium">{project.description}</p>
+              <p className="text-gray-400 font-medium wrap-break-word break-all">
+                {project.description}
+              </p>
             </div>
           </div>
 

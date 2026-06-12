@@ -70,7 +70,7 @@ export const CreateFlashcard = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#f8fafc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-10 px-8 pb-32">
+        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-100 sm:px-8 pb-32">
           {/* Header Navigation */}
           <button
             onClick={onDiscard}
@@ -82,10 +82,10 @@ export const CreateFlashcard = ({
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
             <div className="max-w-2xl">
-              <h2 className="text-4xl font-bold text-[#1a1a4b] mb-2">
+              <h2 className="text-2xl sm:text-4xl font-bold text-[#1a1a4b] mb-2 wrap-break-word break-all">
                 {title || "Untitled Set"}
               </h2>
-              <p className="text-gray-500 font-medium leading-relaxed">
+              <p className="text-gray-500 font-medium leading-relaxed wrap-break-word max-w-3xl break-all">
                 {description || "No description provided."}
               </p>
             </div>
@@ -106,7 +106,7 @@ export const CreateFlashcard = ({
           </div>
 
           {/* Form Section */}
-          <div className="bg-[#edf2f7]/50 rounded-4xl p-8 mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="bg-[#edf2f7]/50 rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
                 Set Title
@@ -117,6 +117,7 @@ export const CreateFlashcard = ({
                 isEditable={true}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter set title..."
+                maxLength={100}
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
             </div>
@@ -157,9 +158,9 @@ export const CreateFlashcard = ({
                 layout
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-4xl p-8 border border-gray-50 shadow-sm relative group hover:shadow-md transition-shadow"
+                className="bg-white rounded-4xl p-4 sm:p-8 border border-gray-50 shadow-sm relative group hover:shadow-md transition-shadow"
               >
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-4 sm:mb-8">
                   <span className="px-3 py-1 bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest rounded-lg">
                     Card {String(index + 1).padStart(2, "0")}
                   </span>
@@ -170,7 +171,7 @@ export const CreateFlashcard = ({
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12">
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       Front
@@ -182,7 +183,7 @@ export const CreateFlashcard = ({
                       onChange={(e) =>
                         updateCard(card.id, "front", e.target.value)
                       }
-                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
+                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-base sm:text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
                     />
                   </div>
                   <div className="space-y-3">
@@ -196,7 +197,7 @@ export const CreateFlashcard = ({
                       onChange={(e) =>
                         updateCard(card.id, "back", e.target.value)
                       }
-                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
+                      className="w-full min-h-25 bg-transparent border-none focus:ring-0 text-base sm:text-lg font-bold text-[#1a1a4b] placeholder-gray-200 resize-none p-3"
                     />
                   </div>
                 </div>
@@ -207,7 +208,7 @@ export const CreateFlashcard = ({
           {/* Add Button */}
           <button
             onClick={addCard}
-            className="w-full py-12 rounded-4xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
+            className="w-full py-6 sm:py-12 rounded-4xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
           >
             <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
               <Plus className="w-6 h-6" />

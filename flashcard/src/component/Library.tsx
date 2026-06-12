@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Clock, MoreVertical, Trash2 } from "lucide-react";
+import { BookOpen, Clock, MoreVertical, Trash2, FileStack } from "lucide-react";
 import type { FlashcardSet, Project } from "../types";
 import { useViewControls } from "../hooks/useViewControls";
 import { FilterBar } from "./FilterBar";
@@ -70,12 +70,15 @@ export const Library = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full h-full bg-[#fafbfc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
+        className="w-full h-full bg-[#fafbfc] rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-16 px-8 flex flex-col items-center">
+        <div className="max-w-5xl mx-auto py-8 sm:py-16 px-4 sm:px-8 flex flex-col items-center">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#1a1a4b] mb-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#edf2f7] rounded-3xl flex items-center justify-center text-[#4d51a3] mx-auto mb-4 sm:mb-6">
+              <FileStack className="w-6 sm:w-8 h-6 sm:h-8" />
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-bold text-[#1a1a4b] mb-3">
               My Library
             </h2>
             <p className="text-gray-500 font-medium tracking-tight">
@@ -83,12 +86,12 @@ export const Library = ({
             </p>
           </div>
 
-          <div className="h-px bg-gray-100 w-full max-w-2xl mb-12" />
+          <div className="h-px bg-gray-100 w-full max-w-2xl" />
 
           {/* Stats Bar */}
-          <div className="w-full max-w-3xl bg-white rounded-4xl p-8 shadow-sm border border-gray-50 flex items-center justify-around mb-12">
+          <div className="w-full max-w-3xl bg-white rounded-4xl p-4 sm:p-8 shadow-sm border border-gray-50 flex items-center justify-around mb-6 sm:mb-12 gap-2">
             <div className="text-center">
-              <span className="block text-4xl font-bold text-[#656799] mb-1">
+              <span className="block text-2xl sm:text-4xl font-bold text-[#656799] mb-1">
                 {sets.length}
               </span>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -96,7 +99,7 @@ export const Library = ({
               </span>
             </div>
             <div className="text-center">
-              <span className="block text-4xl font-bold text-[#656799] mb-1">
+              <span className="block text-2xl sm:text-4xl font-bold text-[#656799] mb-1">
                 {totalCards}
               </span>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -104,7 +107,7 @@ export const Library = ({
               </span>
             </div>
             <div className="text-center">
-              <span className="block text-4xl font-bold text-[#7b81ff] mb-1">
+              <span className="block text-2xl sm:text-4xl font-bold text-[#7b81ff] mb-1">
                 {formatLastStudied(mostRecentDate)}
               </span>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -217,9 +220,14 @@ export const Library = ({
                         )}
 
                         <div className="flex items-center justify-between mt-auto">
-                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                            <Clock className="w-4 h-4" />
-                            <span>{set.cards.length} Cards</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                              <Clock className="w-4 h-4" />
+                              <span>{set.cards.length} Cards</span>
+                            </div>
+                            <span className="text-[11px] font-medium text-gray-400">
+                              {formatLastStudied(set.lastStudied)}
+                            </span>
                           </div>
                           <span className="text-[#6c7df3] font-bold text-sm hover:underline">
                             Open Set
@@ -255,6 +263,9 @@ export const Library = ({
                             <Clock className="w-4 h-4" />
                             <span>{set.cards.length} Cards</span>
                           </div>
+                          <span className="text-[11px] font-medium text-gray-400 hidden sm:block whitespace-nowrap">
+                            {formatLastStudied(set.lastStudied)}
+                          </span>
                           <span className="text-[#6c7df3] font-bold text-sm hover:underline hidden sm:block">
                             Open Set
                           </span>

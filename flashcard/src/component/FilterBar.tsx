@@ -18,15 +18,15 @@ export const FilterBar = ({
   return (
     <div className="w-full max-w-3xl mb-12 flex flex-col sm:flex-row gap-4">
       {/* Search Bar */}
-      <div className="relative w-full flex-1 h-14">
+      <div className="relative w-full flex-1 h-12 sm:h-14">
         <input
           type="text"
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-12 pr-6 py-4 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-[#7b81ff]/20 focus:border-[#7b81ff] outline-none shadow-sm text-gray-600 font-medium"
+          className="w-full pl-10 sm:pl-12 pr-6 py-3 sm:py-4 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-[#7b81ff]/20 focus:border-[#7b81ff] outline-none shadow-sm text-gray-600 font-medium text-sm sm:text-base"
         />
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+        <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-gray-300" />
       </div>
 
       {/* Grid / List Toggle */}
