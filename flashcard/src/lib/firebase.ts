@@ -1,12 +1,21 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from "firebase/app-check";
 
 const firebaseConfig = await fetch("/firebase-applet-config.json").then((r) =>
   r.json(),
 );
 
 const app = initializeApp(firebaseConfig);
+
+initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider("YOUR_SITE_KEY"),
+  isTokenAutoRefreshEnabled: true,
+});
 
 export const db = initializeFirestore(
   app,

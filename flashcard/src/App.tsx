@@ -145,6 +145,11 @@ export default function App() {
     try {
       const setToSave = { ...set, userId: user.uid };
       await setDoc(doc(db, "flashcardSets", set.id), setToSave);
+      await setDoc(
+        doc(db, "users", user.uid),
+        { lastWriteAt: new Date().toISOString() },
+        { merge: true },
+      );
       setEditingSet(null);
       navigate(`/set/${set.id}`);
     } catch (err) {
@@ -161,6 +166,11 @@ export default function App() {
     try {
       const projectToSave = { ...project, userId: user.uid };
       await setDoc(doc(db, "projects", project.id), projectToSave);
+      await setDoc(
+        doc(db, "users", user.uid),
+        { lastWriteAt: new Date().toISOString() },
+        { merge: true },
+      );
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `projects/${project.id}`);
     }

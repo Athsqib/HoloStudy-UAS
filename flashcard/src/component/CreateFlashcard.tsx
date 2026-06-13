@@ -70,7 +70,7 @@ export const CreateFlashcard = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#f8fafc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-100 sm:px-8 pb-32">
+        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-10 sm:px-8 pb-32">
           {/* Header Navigation */}
           <button
             onClick={onDiscard}

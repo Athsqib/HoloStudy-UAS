@@ -27,7 +27,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
   // Toggle State
   const [isEditing, setIsEditing] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
 
   // Flashcard Viewer States
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,6 +94,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             await updateDoc(userRef, {
               streakCount: newStreak,
               lastStudyDate: todayStr,
+              lastWriteAt: new Date().toISOString(),
             });
           }
         } else {
@@ -102,6 +103,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             userId: user.uid,
             streakCount: 1,
             lastStudyDate: todayStr,
+            lastWriteAt: new Date().toISOString(),
           });
         }
       }
@@ -131,13 +133,23 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
         // Prevent default to stop the page from scrolling down when pressing spacebar
         e.preventDefault();
         setIsFlipped((prev) => !prev);
+      } else if (e.key === "Enter" && isLastCard && !isFinishing) {
+        handleFinishSet();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, set.cards.length, handleNext, handlePrev]);
+  }, [
+    isEditing,
+    set.cards.length,
+    handleNext,
+    handlePrev,
+    isLastCard,
+    isFinishing,
+    handleFinishSet,
+  ]);
 
   // --- EDIT MODE ---
   if (isEditing) {
@@ -163,7 +175,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
         className="w-full max-w-4xl h-full bg-[#fafbfc] border border-gray-100 rounded-[40px] shadow-sm flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+        <div className="px-4 sm:px-8 py-4 sm:py-6 gap-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-6 min-w-0 flex-1">
             <button
               onClick={() => navigate("/library")}
@@ -171,36 +183,41 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold text-[#1a1a4b] w-full wrap-break-word whitespace-pre-wrap">
-                {set.title}
-              </h2>
-              {set.description.length > 50 ? (
-                <p
-                  className="text-sm text-gray-400 font-medium wrap-break-word whitespace-pre-wrap cursor-pointer"
-                  onClick={() => setDescExpanded(!descExpanded)}
-                >
-                  {descExpanded
-                    ? set.description
-                    : `${set.description.slice(0, 50)}... `}
-                  <span className="text-indigo-400 font-bold text-xs hover:underline">
-                    {descExpanded ? "Read less" : "Read more"}
-                  </span>
-                </p>
-              ) : (
+            <div className="group min-w-0">
+              <div
+                className={`relative overflow-hidden cursor-pointer transition-all duration-200 ${
+                  headerExpanded ? "" : "max-h-20 sm:group-hover:max-h-96"
+                }`}
+                onClick={() => setHeaderExpanded(!headerExpanded)}
+              >
+                <h2 className="text-lg sm:text-xl font-bold text-[#1a1a4b] w-full wrap-break-word whitespace-pre-wrap">
+                  {set.title}
+                </h2>
+
                 <p className="text-sm text-gray-400 font-medium wrap-break-word whitespace-pre-wrap">
-                  {set.description}
+                  {set.description || "No description."}
                 </p>
+                {!headerExpanded && (
+                  <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none sm:group-hover:opacity-0 transition-opacity duration-200" />
+                )}
+              </div>
+              {headerExpanded && (
+                <button
+                  onClick={() => setHeaderExpanded(false)}
+                  className="text-indigo-400 text-xs font-bold hover:underline mt-1"
+                >
+                  Show less
+                </button>
               )}
             </div>
           </div>
 
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors"
           >
             <Edit3 className="w-4 h-4" />
-            Edit Set
+            <span className="hidden sm:inline">Edit Set</span>
           </button>
         </div>
 

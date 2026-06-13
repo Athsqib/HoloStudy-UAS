@@ -118,6 +118,18 @@ export const Dashboard = ({
                 ) {
                   completed = true;
                 }
+                // Reset streak if inactive for 2+ days
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0, 0, 0, 0);
+                const lastMidnight = new Date(lastDate);
+                lastMidnight.setHours(0, 0, 0, 0);
+                const diffDays = Math.round(
+                  (todayMidnight.getTime() - lastMidnight.getTime()) /
+                    (1000 * 60 * 60 * 24),
+                );
+                if (diffDays >= 2) {
+                  setCurrentStreak(0);
+                }
               }
             } catch (err) {
               console.error("Gagal memproses data streak:", err);
