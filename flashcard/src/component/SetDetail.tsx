@@ -198,7 +198,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
                   {set.description || "No description."}
                 </p>
                 {!headerExpanded && (
-                  <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none sm:group-hover:opacity-0 transition-opacity duration-200" />
+                  <div className="absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-white to-transparent pointer-events-none sm:group-hover:opacity-0 transition-opacity duration-200" />
                 )}
               </div>
               {headerExpanded && (

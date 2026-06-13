@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Zap,
+  Flame,
   BookOpen,
   ArrowRight,
   Edit2,
   Check,
   Target,
-  Clock,
 } from "lucide-react";
 import type { FlashcardSet, UserProfile } from "../types";
 import { useUsername } from "../hooks/useUsername";
@@ -148,11 +147,13 @@ export const Dashboard = ({
     return () => unsubscribe();
   }, [user]);
 
+  const isOnFire = hasCompletedToday;
   const maxStreakDisplay = 7;
-  const progressPercentage = Math.min(
-    (currentStreak / maxStreakDisplay) * 100,
-    100,
-  );
+  const progressPercentage =
+    currentStreak === 0
+      ? 0
+      : ((((currentStreak - 1) % maxStreakDisplay) + 1) / maxStreakDisplay) *
+        100;
 
   // --- STREAK CYCLE MATH ---
   const todayDate = new Date();
@@ -303,29 +304,44 @@ export const Dashboard = ({
             </div>
 
             {/* Streak Card */}
-            <div className="bg-[#e9e9ff] rounded-4xl p-8 flex flex-col justify-between shadow-sm border border-white/50 transition-all hover:shadow-xl hover:shadow-indigo-900/5">
+            <div
+              className={`rounded-4xl p-8 flex flex-col justify-between shadow-sm border transition-all hover:shadow-xl ${
+                isOnFire
+                  ? "bg-linear-to-br from-orange-50 to-amber-50 border-orange-100/50 hover:shadow-orange-900/5"
+                  : "bg-[#e9e9ff] border-white/50 hover:shadow-indigo-900/5"
+              }`}
+            >
               <div>
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-[#c5c8f2] flex items-center justify-center text-[#4d51a3] shadow-sm">
-                    <Zap className="w-6 h-6 fill-[#4d51a3]" />
+                <div className="flex items-start mb-6">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${
+                      isOnFire
+                        ? "bg-linear-to-br from-orange-400 to-red-400 shadow-orange-200"
+                        : "bg-[#c5c8f2]"
+                    }`}
+                  >
+                    <Flame
+                      className={`w-6 h-6 ${
+                        isOnFire
+                          ? "text-white fill-white"
+                          : "text-[#4d51a3] fill-[#4d51a3]"
+                      }`}
+                    />
                   </div>
-
-                  {/* --- NEW STATUS BADGE --- */}
-                  {hasCompletedToday ? (
-                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-700 px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-                      <Check className="w-3.5 h-3.5" /> Done Today
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[10px] font-bold bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
-                      <Clock className="w-3.5 h-3.5" /> Not Yet Studied
-                    </span>
-                  )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-[#2d2d66] mb-2 tracking-tight">
+                <h3
+                  className={`text-2xl font-bold mb-2 tracking-tight ${
+                    isOnFire ? "text-orange-700" : "text-[#2d2d66]"
+                  }`}
+                >
                   {currentStreak} Day Streak
                 </h3>
-                <p className="text-gray-500 text-sm font-medium leading-relaxed">
+                <p
+                  className={`text-sm font-medium leading-relaxed ${
+                    isOnFire ? "text-orange-600/70" : "text-gray-500"
+                  }`}
+                >
                   {currentStreak >= 3
                     ? "You are on fire! Don't let the flame go out."
                     : "Great start! Keep going to build your streak."}
@@ -334,9 +350,19 @@ export const Dashboard = ({
 
               <div className="mt-8">
                 {/* Progress Bar */}
-                <div className="h-3 w-full bg-white/50 rounded-full overflow-hidden mb-4 border border-white/20 p-0.5">
+                <div
+                  className={`h-3 w-full rounded-full overflow-hidden mb-4 border p-0.5 ${
+                    isOnFire
+                      ? "bg-orange-100/50 border-orange-200/20"
+                      : "bg-white/50 border-white/20"
+                  }`}
+                >
                   <div
-                    className="h-full bg-[#656799] rounded-full transition-all duration-1000 shadow-sm"
+                    className={`h-full rounded-full transition-all duration-1000 shadow-sm ${
+                      isOnFire
+                        ? "bg-linear-to-r from-orange-400 to-red-400 shadow-orange-200"
+                        : "bg-[#656799]"
+                    }`}
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
@@ -347,9 +373,13 @@ export const Dashboard = ({
                       key={day.id}
                       className={`text-[9px] font-bold tracking-tighter transition-colors ${
                         day.isToday
-                          ? "text-[#2d2d66] scale-110"
+                          ? isOnFire
+                            ? "text-orange-600 scale-110"
+                            : "text-[#2d2d66] scale-110"
                           : day.isPartOfStreak
-                            ? "text-[#656799]"
+                            ? isOnFire
+                              ? "text-orange-400"
+                              : "text-[#656799]"
                             : "text-gray-400"
                       }`}
                     >
