@@ -58,7 +58,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
     }, 150);
   }, [currentIndex]);
 
-  const handleFinishSet = async () => {
+  const handleFinishSet = useCallback(async () => {
     setIsFinishing(true);
     try {
       const user = auth.currentUser;
@@ -118,7 +118,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
     } finally {
       setIsFinishing(false);
     }
-  };
+  }, [set.id, navigate]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

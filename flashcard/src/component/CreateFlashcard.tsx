@@ -1,6 +1,14 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trash2, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Upload,
+  FileText,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
 import { EditableTextarea } from "./EditableTextarea";
@@ -26,6 +34,14 @@ export const CreateFlashcard = ({
   );
   const [cards, setCards] = useState<Flashcard[]>(initialSet?.cards || []);
 
+  const [file, setFile] = useState<File | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+  const [cardLimit, setCardLimit] = useState(10);
+
+  const BACKEND_URL =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
   const addCard = () => {
     setCards([
       ...cards,
@@ -39,6 +55,46 @@ export const CreateFlashcard = ({
 
   const updateCard = (id: string, field: "front" | "back", value: string) => {
     setCards(cards.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  };
+
+  const handleGenerateFromFile = async () => {
+    if (!file) return;
+    setIsGenerating(true);
+    setGenerateError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("limit", cardLimit.toString());
+
+      const response = await fetch(`${BACKEND_URL}/generate`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate flashcards");
+      }
+
+      const newCards: Flashcard[] = (data.flashcards || []).map(
+        (fc: { front: string; back: string }) => ({
+          id: Math.random().toString(36).slice(2, 11),
+          front: fc.front || "",
+          back: fc.back || "",
+        }),
+      );
+
+      setCards((prev) => [...prev, ...newCards]);
+      setFile(null);
+    } catch (err) {
+      setGenerateError(
+        err instanceof Error ? err.message : "Something went wrong",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSave = () => {
@@ -70,7 +126,7 @@ export const CreateFlashcard = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#f8fafc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-10 sm:px-8 pb-32">
+        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-100 sm:px-8 pb-32">
           {/* Header Navigation */}
           <button
             onClick={onDiscard}
@@ -148,6 +204,112 @@ export const CreateFlashcard = ({
                 className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
             </div>
+          </div>
+
+          {/* Auto-Generate from File */}
+          <div className="bg-linear-to-br from-[#f0f2ff] to-[#f8fafc] rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 border border-[#6c7df3]/10 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-[#6c7df3]/10 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#6c7df3]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#1a1a4b]">
+                  Auto-Generate from File
+                </h3>
+                <p className="text-xs text-gray-500 font-medium">
+                  Upload a PDF, DOCX, or TXT file to automatically create
+                  flashcards
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+              <div className="lg:col-span-2">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                  Choose File
+                </label>
+                <div
+                  onClick={() => document.getElementById("file-input")?.click()}
+                  className={`w-full px-5 py-8 bg-white border-2 border-dashed rounded-xl cursor-pointer transition-all text-center ${
+                    file
+                      ? "border-[#6c7df3] bg-[#6c7df3]/5"
+                      : "border-gray-200 hover:border-[#6c7df3]/40 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    className="hidden"
+                    onChange={(e) => {
+                      setFile(e.target.files?.[0] || null);
+                      setGenerateError("");
+                    }}
+                  />
+                  {file ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <FileText className="w-6 h-6 text-[#6c7df3]" />
+                      <span className="font-medium text-[#1a1a4b] text-sm truncate max-w-75">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        ({(file.size / 1024).toFixed(0)} KB)
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-3">
+                      <Upload className="w-6 h-6 text-gray-300" />
+                      <span className="text-sm font-medium text-gray-400">
+                        Drop a file here or click to browse
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                    Max Cards
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={cardLimit}
+                    onChange={(e) =>
+                      setCardLimit(
+                        Math.max(1, Math.min(50, Number(e.target.value))),
+                      )
+                    }
+                    className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
+                  />
+                </div>
+                <button
+                  onClick={handleGenerateFromFile}
+                  disabled={!file || isGenerating}
+                  className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Generate
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {generateError && (
+              <div className="mt-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm font-medium text-red-500">
+                {generateError}
+              </div>
+            )}
           </div>
 
           {/* Cards List */}
