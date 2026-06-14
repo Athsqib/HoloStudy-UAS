@@ -13,7 +13,9 @@ const firebaseConfig = await fetch("/firebase-applet-config.json").then((r) =>
 const app = initializeApp(firebaseConfig);
 
 initializeAppCheck(app, {
-  provider: new ReCaptchaEnterpriseProvider("YOUR_SITE_KEY"),
+  provider: new ReCaptchaEnterpriseProvider(
+    "6LdvEh0tAAAAAPYd76UBhmn1kFVi85fNNxbZ1yDm",
+  ),
   isTokenAutoRefreshEnabled: true,
 });
 

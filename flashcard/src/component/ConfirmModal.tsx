@@ -74,12 +74,6 @@ export const ConfirmModal = ({
                   </button>
                 )}
                 <button
-                  onClick={onCancel}
-                  className="flex-1 py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  {cancelText}
-                </button>
-                <button
                   onClick={onConfirm}
                   className={`${hideCancel ? "w-full" : "flex-1"} py-3 px-4 rounded-2xl font-bold text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                     resolvedDestructive

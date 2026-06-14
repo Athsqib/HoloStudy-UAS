@@ -1,0 +1,22 @@
+# Node
+node_modules/
+
+# Build output
+dist/
+
+# Firebase cache
+.firebase/
+firebase-debug.log
+
+# Environment
+.env
+.env.local
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+.DS_Store

@@ -45,6 +45,23 @@ def generate():
     finally:
         os.unlink(tmp_path)
 
+@app.route("/generate-text", methods=["POST"])
+def generate_text():
+    data = request.get_json(silent=True)
+    if not data or not data.get("text"):
+        return jsonify({"error": "No text provided"}), 400
+
+    text = data["text"].strip()
+    if len(text) < 10:
+        return jsonify({"error": "Text is too short (min 10 characters)"}), 400
+
+    limit = data.get("limit", 10)
+    flashcards = generate_flashcards(text, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "flashcards": flashcards,
+    })
 
 @app.route("/health", methods=["GET"])
 def health():

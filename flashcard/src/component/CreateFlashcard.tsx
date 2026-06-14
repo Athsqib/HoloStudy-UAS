@@ -1,18 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Trash2,
-  Plus,
-  Upload,
-  FileText,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, Trash2, Plus, Upload, FileText, Loader2, Sparkles, TextCursorInput, Printer } from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
 import { EditableTextarea } from "./EditableTextarea";
 import { SelectDropdown } from "./SelectDropdown";
+import jsPDF from "jspdf";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -34,13 +27,14 @@ export const CreateFlashcard = ({
   );
   const [cards, setCards] = useState<Flashcard[]>(initialSet?.cards || []);
 
+  const [inputMode, setInputMode] = useState<"file" | "text">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [inputText, setInputText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [cardLimit, setCardLimit] = useState(10);
 
-  const BACKEND_URL =
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   const addCard = () => {
     setCards([
@@ -95,6 +89,115 @@ export const CreateFlashcard = ({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleGenerateFromText = async () => {
+    if (!inputText.trim()) return;
+    setIsGenerating(true);
+    setGenerateError("");
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/generate-text`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: inputText, limit: cardLimit }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate flashcards");
+      }
+
+      const newCards: Flashcard[] = (data.flashcards || []).map(
+        (fc: { front: string; back: string }) => ({
+          id: Math.random().toString(36).slice(2, 11),
+          front: fc.front || "",
+          back: fc.back || "",
+        }),
+      );
+
+      setCards((prev) => [...prev, ...newCards]);
+      setInputText("");
+    } catch (err) {
+      setGenerateError(
+        err instanceof Error ? err.message : "Something went wrong",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExportPDF = () => {
+    const validCards = cards.filter(
+      (c) => c.front.trim() !== "" || c.back.trim() !== "",
+    );
+    if (validCards.length === 0) return;
+
+    const pdf = new jsPDF();
+    const pageW = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxW = pageW - margin * 2;
+    let y = margin;
+
+    pdf.setFontSize(16);
+    pdf.text(title || "Untitled Set", margin, y);
+    y += 10;
+    pdf.setFontSize(10);
+    pdf.text(`Total cards: ${validCards.length}`, margin, y);
+    y += 8;
+
+    for (let i = 0; i < validCards.length; i++) {
+      if (y > 270) {
+        pdf.addPage();
+        y = margin;
+      }
+
+      const card = validCards[i];
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      const header = `Card ${i + 1}`;
+      pdf.text(header, margin, y);
+      y += 7;
+
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Front:", margin, y);
+      y += 5;
+      pdf.setFont("helvetica", "normal");
+      const frontLines = pdf.splitTextToSize(card.front || "-", maxW - 5);
+      frontLines.forEach((line: string) => {
+        if (y > 275) {
+          pdf.addPage();
+          y = margin;
+        }
+        pdf.text(line, margin + 5, y);
+        y += 5;
+      });
+      y += 3;
+
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Back:", margin, y);
+      y += 5;
+      pdf.setFont("helvetica", "normal");
+      const backLines = pdf.splitTextToSize(card.back || "-", maxW - 5);
+      backLines.forEach((line: string) => {
+        if (y > 275) {
+          pdf.addPage();
+          y = margin;
+        }
+        pdf.text(line, margin + 5, y);
+        y += 5;
+      });
+      y += 6;
+
+      if (i < validCards.length - 1) {
+        pdf.setDrawColor(220, 220, 220);
+        pdf.line(margin, y - 3, pageW - margin, y - 3);
+      }
+    }
+
+    pdf.save(`${title || "flashcards"}.pdf`);
   };
 
   const handleSave = () => {
@@ -153,6 +256,14 @@ export const CreateFlashcard = ({
                 Discard
               </button>
               <button
+                onClick={handleExportPDF}
+                disabled={cards.filter((c) => c.front.trim() || c.back.trim()).length === 0}
+                className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <Printer className="w-4 h-4" />
+                Export PDF
+              </button>
+              <button
                 onClick={handleSave}
                 className="px-8 py-2.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95"
               >
@@ -206,104 +317,173 @@ export const CreateFlashcard = ({
             </div>
           </div>
 
-          {/* Auto-Generate from File */}
-          <div className="bg-linear-to-br from-[#f0f2ff] to-[#f8fafc] rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 border border-[#6c7df3]/10 shadow-sm">
+          {/* Auto-Generate from File or Text */}
+          <div className="bg-gradient-to-br from-[#f0f2ff] to-[#f8fafc] rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 border border-[#6c7df3]/10 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-[#6c7df3]/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-[#6c7df3]" />
               </div>
               <div>
-                <h3 className="font-bold text-[#1a1a4b]">
-                  Auto-Generate from File
-                </h3>
-                <p className="text-xs text-gray-500 font-medium">
-                  Upload a PDF, DOCX, or TXT file to automatically create
-                  flashcards
-                </p>
+                <h3 className="font-bold text-[#1a1a4b]">Auto-Generate Flashcards</h3>
+                <p className="text-xs text-gray-500 font-medium">Upload a file or paste text to automatically create flashcards</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
-              <div className="lg:col-span-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
-                  Choose File
-                </label>
-                <div
-                  onClick={() => document.getElementById("file-input")?.click()}
-                  className={`w-full px-5 py-8 bg-white border-2 border-dashed rounded-xl cursor-pointer transition-all text-center ${
-                    file
-                      ? "border-[#6c7df3] bg-[#6c7df3]/5"
-                      : "border-gray-200 hover:border-[#6c7df3]/40 hover:bg-gray-50"
-                  }`}
-                >
-                  <input
-                    id="file-input"
-                    type="file"
-                    accept=".pdf,.docx,.txt"
-                    className="hidden"
+            <div className="flex gap-1 mb-5 bg-white rounded-xl p-1 border border-gray-100 w-fit">
+              <button
+                onClick={() => setInputMode("file")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                  inputMode === "file"
+                    ? "bg-[#6c7df3] text-white shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                File
+              </button>
+              <button
+                onClick={() => setInputMode("text")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                  inputMode === "text"
+                    ? "bg-[#6c7df3] text-white shadow-sm"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <TextCursorInput className="w-3.5 h-3.5" />
+                Text
+              </button>
+            </div>
+
+            {inputMode === "file" ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                <div className="lg:col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                    Choose File
+                  </label>
+                  <div
+                    onClick={() => document.getElementById("file-input")?.click()}
+                    className={`w-full px-5 py-8 bg-white border-2 border-dashed rounded-xl cursor-pointer transition-all text-center ${
+                      file
+                        ? "border-[#6c7df3] bg-[#6c7df3]/5"
+                        : "border-gray-200 hover:border-[#6c7df3]/40 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      id="file-input"
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      className="hidden"
+                      onChange={(e) => {
+                        setFile(e.target.files?.[0] || null);
+                        setGenerateError("");
+                      }}
+                    />
+                    {file ? (
+                      <div className="flex items-center justify-center gap-3">
+                        <FileText className="w-6 h-6 text-[#6c7df3]" />
+                        <span className="font-medium text-[#1a1a4b] text-sm truncate max-w-[300px]">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          ({(file.size / 1024).toFixed(0)} KB)
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-3">
+                        <Upload className="w-6 h-6 text-gray-300" />
+                        <span className="text-sm font-medium text-gray-400">
+                          Drop a file here or click to browse
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                      Max Cards
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={cardLimit}
+                      onChange={(e) => setCardLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
+                      className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
+                    />
+                  </div>
+                  <button
+                    onClick={handleGenerateFromFile}
+                    disabled={!file || isGenerating}
+                    className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                <div className="lg:col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                    Paste Your Text
+                  </label>
+                  <textarea
+                    value={inputText}
                     onChange={(e) => {
-                      setFile(e.target.files?.[0] || null);
+                      setInputText(e.target.value);
                       setGenerateError("");
                     }}
+                    placeholder="Paste or type the content you want to generate flashcards from..."
+                    rows={5}
+                    className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] resize-none text-sm leading-relaxed"
                   />
-                  {file ? (
-                    <div className="flex items-center justify-center gap-3">
-                      <FileText className="w-6 h-6 text-[#6c7df3]" />
-                      <span className="font-medium text-[#1a1a4b] text-sm truncate max-w-75">
-                        {file.name}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        ({(file.size / 1024).toFixed(0)} KB)
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-3">
-                      <Upload className="w-6 h-6 text-gray-300" />
-                      <span className="text-sm font-medium text-gray-400">
-                        Drop a file here or click to browse
-                      </span>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
-                    Max Cards
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={cardLimit}
-                    onChange={(e) =>
-                      setCardLimit(
-                        Math.max(1, Math.min(50, Number(e.target.value))),
-                      )
-                    }
-                    className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
-                  />
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
+                      Max Cards
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={cardLimit}
+                      onChange={(e) => setCardLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
+                      className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
+                    />
+                  </div>
+                  <button
+                    onClick={handleGenerateFromText}
+                    disabled={!inputText.trim() || isGenerating}
+                    className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={handleGenerateFromFile}
-                  disabled={!file || isGenerating}
-                  className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Generate
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
+            )}
 
             {generateError && (
               <div className="mt-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm font-medium text-red-500">
