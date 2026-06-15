@@ -14,6 +14,7 @@ import { CreateFlashcard } from "./CreateFlashcard";
 import type { FlashcardSet, Project, FlexibleCard } from "../types";
 import { db, auth } from "../lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { Button } from "./Button";
 
 interface SetDetailProps {
   set: FlashcardSet;
@@ -212,13 +213,14 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             </div>
           </div>
 
-          <button
+          <Button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-3 sm:px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-100 transition-colors"
+            variant="primary"
+            size="sm"
+            icon={<Edit3 className="w-4 h-4" />}
           >
-            <Edit3 className="w-4 h-4" />
             <span className="hidden sm:inline">Edit Set</span>
-          </button>
+          </Button>
         </div>
 
         {/* Study Area */}
@@ -266,16 +268,19 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               >
                 <ChevronLeft className="w-5 sm:w-6 h-5 sm:h-6" />
               </button>
-
               {isLastCard ? (
-                <button
+                <Button
                   onClick={handleFinishSet}
                   disabled={isFinishing}
-                  className="h-12 sm:h-14 px-6 sm:px-8 rounded-full bg-[#656799] text-white font-bold flex items-center gap-2 hover:bg-[#545685] transition-all active:scale-95 shadow-md shadow-indigo-900/10 disabled:opacity-70 disabled:cursor-wait"
+                  variant="primary"
+                  size="md"
+                  rounded="full"
+                  loading={isFinishing}
+                  icon={<CheckCircle className="w-5 h-5" />}
+                  className="h-12 sm:h-14 px-6 sm:px-8 active:scale-95"
                 >
-                  <CheckCircle className="w-5 h-5" />
                   {isFinishing ? "Saving..." : "Finish Set"}
-                </button>
+                </Button>
               ) : (
                 <button
                   onClick={handleNext}
@@ -294,12 +299,18 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             <p className="text-gray-400 mb-6">
               Click Edit Set to add some flashcards!
             </p>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-6 py-3 bg-[#656799] text-white rounded-xl font-bold"
+            <Button
+              onClick={handleFinishSet}
+              disabled={isFinishing}
+              variant="primary"
+              size="md"
+              rounded="full"
+              loading={isFinishing}
+              icon={<CheckCircle className="w-5 h-5" />}
+              className="h-12 sm:h-14 px-6 sm:px-8 active:scale-95"
             >
-              Add Cards
-            </button>
+              {isFinishing ? "Saving..." : "Finish Set"}
+            </Button>
           </div>
         )}
       </motion.div>

@@ -15,6 +15,10 @@ import { useViewControls } from "../hooks/useViewControls";
 import { FilterBar } from "./FilterBar";
 import { useNavigate } from "react-router-dom";
 import { ConfirmModal } from "./ConfirmModal";
+import { CreateButton } from "./CreateButton";
+import { Button } from "./Button";
+import { EditableInput } from "./EditableInput";
+import { EditableTextarea } from "./EditableTextarea";
 
 interface ProjectsProps {
   projects: Project[];
@@ -164,21 +168,12 @@ export const Projects = ({
                 >
                   {/* Create New Project Button/Form */}
                   {!isCreatingProject ? (
-                    <button
+                    <CreateButton
+                      label="Create New Project"
+                      icon={<Plus className="w-6 h-6" />}
                       onClick={() => setIsCreatingProject(true)}
-                      className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group ${
-                        projectViewMode === "grid"
-                          ? "flex-col h-64"
-                          : "flex-row h-24 px-8 w-full justify-start"
-                      }`}
-                    >
-                      <div className="w-12 h-12 shrink-0 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
-                        <Plus className="w-6 h-6" />
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-widest">
-                        Create New Project
-                      </span>
-                    </button>
+                      viewMode={projectViewMode}
+                    />
                   ) : (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -191,19 +186,23 @@ export const Projects = ({
                         onSubmit={handleCreateProject}
                         className="flex-1 flex flex-col gap-4"
                       >
-                        <input
+                        <EditableInput
                           autoFocus
                           type="text"
                           placeholder="Project Title"
                           value={newProjectTitle}
                           onChange={(e) => setNewProjectTitle(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-bold"
+                          variant="default"
+                          isEditable={true}
+                          className="px-4 py-2 font-bold"
                         />
-                        <textarea
+                        <EditableTextarea
                           placeholder="Short description..."
                           value={newProjectDesc}
                           onChange={(e) => setNewProjectDesc(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none text-sm resize-none h-20"
+                          variant="default"
+                          isEditable={true}
+                          className="px-4 py-2 text-sm h-20"
                         />
                         <div className="flex gap-2 mt-auto">
                           <button
@@ -213,12 +212,14 @@ export const Projects = ({
                           >
                             Cancel
                           </button>
-                          <button
+                          <Button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-[#6c7df3] text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all"
+                            variant="primary"
+                            size="sm"
+                            className="flex-1"
                           >
                             Create
-                          </button>
+                          </Button>
                         </div>
                       </form>
                     </motion.div>

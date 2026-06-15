@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { Button } from "./Button";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -66,23 +67,24 @@ export const ConfirmModal = ({
 
               <div className="flex gap-3">
                 {!hideCancel && (
-                  <button
+                  <Button
                     onClick={onCancel}
-                    className="flex-1 py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    variant="tertiary"
+                    rounded="2xl"
+                    className="flex-1 focus:ring-2 focus:ring-gray-200"
                   >
                     {cancelText}
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   onClick={onConfirm}
-                  className={`${hideCancel ? "w-full" : "flex-1"} py-3 px-4 rounded-2xl font-bold text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    resolvedDestructive
-                      ? "bg-red-500 hover:bg-red-600 focus:ring-red-500 shadow-lg shadow-red-500/20"
-                      : "bg-[#6c7df3] hover:bg-[#5a6be0] focus:ring-[#6c7df3] shadow-lg shadow-indigo-900/20"
-                  }`}
+                  variant="primary"
+                  rounded="2xl"
+                  destructive={resolvedDestructive}
+                  className={`${hideCancel ? "w-full" : "flex-1"} focus:ring-2 focus:ring-offset-2 ${resolvedDestructive ? "focus:ring-red-500" : "focus:ring-[#6c7df3]"}`}
                 >
                   {resolvedConfirmText}
-                </button>
+                </Button>
               </div>
             </div>
           </motion.div>

@@ -14,6 +14,7 @@ import type { User } from "firebase/auth";
 import { SelectDropdown } from "./SelectDropdown";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { Button } from "./Button";
 
 export const Dashboard = ({
   user,
@@ -293,13 +294,15 @@ export const Dashboard = ({
                     : "Create your first flashcard set to start setting and tracking your learning goals!"}
                 </p>
 
-                <button
+                <Button
                   onClick={() => activeGoalSet && onOpenSet(activeGoalSet)}
                   disabled={!activeGoalSet}
-                  className="bg-[#656799] disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-3.5 rounded-xl font-bold hover:bg-[#545685] transition-all shadow-lg shadow-purple-900/10 active:scale-95 w-max"
+                  variant="primary"
+                  size="md"
+                  className="w-max active:scale-95"
                 >
                   {activeGoalSet ? "Continue Set" : "Start Learning"}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -430,7 +433,7 @@ export const Dashboard = ({
               </div>
             ) : (
               <div className="h-48 rounded-[40px] border-2 border-dashed border-gray-100 flex items-center justify-center bg-[#fafbfc]">
-                <p className="text-gray-300 font-medium italic">
+                <p className="text-gray-300 font-medium italic p-3">
                   No sets found. Create your first one to see it here!
                 </p>
               </div>

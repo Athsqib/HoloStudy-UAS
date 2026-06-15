@@ -25,6 +25,8 @@ import {
   UserCircle,
   User,
 } from "lucide-react";
+import { Button } from "./Button";
+import { EditableInput } from "./EditableInput";
 
 export const AuthScreen = () => {
   const [error, setError] = useState("");
@@ -268,34 +270,37 @@ export const AuthScreen = () => {
           {isLoginMode ? (
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+              <EditableInput
                 type="text"
                 placeholder="Username or Email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+                variant="auth"
+                isEditable={true}
               />
             </div>
           ) : (
             <>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+                <EditableInput
                   type="text"
                   placeholder="Choose a Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+                  variant="auth"
+                  isEditable={true}
                 />
               </div>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
+                <EditableInput
                   type="email"
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+                  variant="auth"
+                  isEditable={true}
                 />
               </div>
             </>
@@ -303,12 +308,13 @@ export const AuthScreen = () => {
 
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
+            <EditableInput
               type="password"
               placeholder="Password (min 6 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full py-4 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6c7df3]/50 focus:border-[#6c7df3] transition-all"
+              variant="auth"
+              isEditable={true}
             />
           </div>
 
@@ -325,19 +331,17 @@ export const AuthScreen = () => {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 px-6 bg-[#6c7df3] hover:bg-[#5a6be0] text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70 shadow-lg shadow-indigo-900/20"
+            variant="primary"
+            size="lg"
+            rounded="2xl"
+            loading={isLoading}
+            className="w-full gap-3"
           >
-            {isLoading ? (
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : isLoginMode ? (
-              "Sign In"
-            ) : (
-              "Sign Up"
-            )}
-          </button>
+            {isLoginMode ? "Sign In" : "Sign Up"}
+          </Button>
         </form>
 
         <button
@@ -365,25 +369,31 @@ export const AuthScreen = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <button
+          <Button
             onClick={handleGoogleSignIn}
             type="button"
             disabled={isLoading}
-            className="w-full py-4 px-6 bg-white border-2 border-gray-100 hover:bg-gray-50 text-gray-700 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+            variant="secondary"
+            size="lg"
+            rounded="2xl"
+            icon={<LogIn className="w-5 h-5 text-gray-500" />}
+            className="w-full gap-3"
           >
-            <LogIn className="w-5 h-5 text-gray-500" />
             Continue with Google
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleGuestSignIn}
             type="button"
             disabled={isLoading}
-            className="w-full py-4 px-6 bg-gray-50 border-2 border-transparent hover:bg-gray-100 text-gray-600 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 disabled:opacity-70"
+            variant="tertiary"
+            size="lg"
+            rounded="2xl"
+            icon={<UserCircle className="w-5 h-5 text-gray-400" />}
+            className="w-full gap-3"
           >
-            <UserCircle className="w-5 h-5 text-gray-400" />
             Continue as Guest
-          </button>
+          </Button>
         </div>
       </motion.div>
     </div>

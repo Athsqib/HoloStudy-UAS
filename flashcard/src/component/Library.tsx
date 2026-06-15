@@ -4,6 +4,8 @@ import { BookOpen, Clock, MoreVertical, Trash2, FileStack } from "lucide-react";
 import type { FlashcardSet, Project } from "../types";
 import { useViewControls } from "../hooks/useViewControls";
 import { FilterBar } from "./FilterBar";
+import { CreateButton } from "./CreateButton";
+import { Button } from "./Button";
 
 interface LibraryProps {
   sets: FlashcardSet[];
@@ -132,21 +134,12 @@ export const Library = ({
                   : "flex flex-col gap-4 max-w-3xl"
               } pb-20`}
             >
-              <div
+              <CreateButton
+                label="Create New Set"
+                icon={<BookOpen className="w-6 h-6" strokeWidth={1.5} />}
                 onClick={onCreateFirst}
-                className={`rounded-4xl border-2 border-dashed border-gray-100 flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group cursor-pointer ${
-                  viewMode === "grid"
-                    ? "flex-col h-64"
-                    : "flex-row h-24 px-8 w-full justify-start"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
-                  <BookOpen className="w-6 h-6" strokeWidth={1.5} />
-                </div>
-                <span className="font-bold text-xs uppercase tracking-widest">
-                  Create New Set
-                </span>
-              </div>
+                viewMode={viewMode}
+              />
 
               <AnimatePresence>
                 {filteredSets.map((set) => (
@@ -316,12 +309,15 @@ export const Library = ({
               <p className="text-gray-400/80 font-medium mb-8">
                 Create your first flashcard set to see it here!
               </p>
-              <button
+              <Button
                 onClick={onCreateFirst}
-                className="bg-[#6c7df3] text-white px-10 py-4 rounded-full font-bold hover:bg-[#5a6be0] transition-all shadow-lg shadow-blue-900/10 active:scale-95"
+                variant="primary"
+                size="md"
+                rounded="full"
+                className="px-10 active:scale-95"
               >
                 Create First Set
-              </button>
+              </Button>
             </div>
           )}
         </div>

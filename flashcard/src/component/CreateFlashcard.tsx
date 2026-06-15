@@ -1,11 +1,22 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trash2, Plus, Upload, FileText, Loader2, Sparkles, TextCursorInput, Printer } from "lucide-react";
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Upload,
+  FileText,
+  Sparkles,
+  TextCursorInput,
+  Printer,
+} from "lucide-react";
 import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
 import { EditableTextarea } from "./EditableTextarea";
 import { SelectDropdown } from "./SelectDropdown";
 import jsPDF from "jspdf";
+import { CreateButton } from "./CreateButton";
+import { Button } from "./Button";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -33,8 +44,10 @@ export const CreateFlashcard = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [cardLimit, setCardLimit] = useState(10);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  const BACKEND_URL =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   const addCard = () => {
     setCards([
@@ -49,6 +62,52 @@ export const CreateFlashcard = ({
 
   const updateCard = (id: string, field: "front" | "back", value: string) => {
     setCards(cards.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      const validTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+      ];
+      const ext = droppedFile.name.split(".").pop()?.toLowerCase();
+      if (
+        validTypes.includes(droppedFile.type) ||
+        ext === "pdf" ||
+        ext === "docx" ||
+        ext === "txt"
+      ) {
+        setFile(droppedFile);
+        setGenerateError("");
+      } else {
+        setGenerateError(
+          "Unsupported file type. Please upload a PDF, DOCX, or TXT file.",
+        );
+      }
+    }
   };
 
   const handleGenerateFromFile = async () => {
@@ -229,7 +288,7 @@ export const CreateFlashcard = ({
         animate={{ opacity: 1, y: 0 }}
         className="w-full h-full bg-[#f8fafc] border border-gray-100 rounded-[40px] shadow-sm overflow-y-auto no-scrollbar"
       >
-        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-100 sm:px-8 pb-32">
+        <div className="max-w-5xl mx-auto py-6 px-4 sm:py-10 sm:px-8 pb-32">
           {/* Header Navigation */}
           <button
             onClick={onDiscard}
@@ -257,18 +316,23 @@ export const CreateFlashcard = ({
               </button>
               <button
                 onClick={handleExportPDF}
-                disabled={cards.filter((c) => c.front.trim() || c.back.trim()).length === 0}
+                disabled={
+                  cards.filter((c) => c.front.trim() || c.back.trim())
+                    .length === 0
+                }
                 className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <Printer className="w-4 h-4" />
                 Export PDF
               </button>
-              <button
+              <Button
                 onClick={handleSave}
-                className="px-8 py-2.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95"
+                variant="primary"
+                size="md"
+                className="px-8 active:scale-95"
               >
                 Save Set
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -282,10 +346,10 @@ export const CreateFlashcard = ({
                 type="text"
                 value={title}
                 isEditable={true}
+                variant="default"
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter set title..."
                 maxLength={100}
-                className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
             </div>
             <div className="space-y-2">
@@ -310,22 +374,26 @@ export const CreateFlashcard = ({
                 type="text"
                 value={description}
                 isEditable={true}
+                variant="default"
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add a short summary..."
-                className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm"
               />
             </div>
           </div>
 
           {/* Auto-Generate from File or Text */}
-          <div className="bg-gradient-to-br from-[#f0f2ff] to-[#f8fafc] rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 border border-[#6c7df3]/10 shadow-sm">
+          <div className="bg-linear-to-br from-[#f0f2ff] to-[#f8fafc] rounded-4xl p-4 sm:p-8 mb-6 sm:mb-10 border border-[#6c7df3]/10 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-[#6c7df3]/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-[#6c7df3]" />
               </div>
               <div>
-                <h3 className="font-bold text-[#1a1a4b]">Auto-Generate Flashcards</h3>
-                <p className="text-xs text-gray-500 font-medium">Upload a file or paste text to automatically create flashcards</p>
+                <h3 className="font-bold text-[#1a1a4b]">
+                  Auto-Generate Flashcards
+                </h3>
+                <p className="text-xs text-gray-500 font-medium">
+                  Upload a file or paste text to automatically create flashcards
+                </p>
               </div>
             </div>
 
@@ -361,11 +429,19 @@ export const CreateFlashcard = ({
                     Choose File
                   </label>
                   <div
-                    onClick={() => document.getElementById("file-input")?.click()}
+                    onClick={() =>
+                      document.getElementById("file-input")?.click()
+                    }
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                     className={`w-full px-5 py-8 bg-white border-2 border-dashed rounded-xl cursor-pointer transition-all text-center ${
-                      file
-                        ? "border-[#6c7df3] bg-[#6c7df3]/5"
-                        : "border-gray-200 hover:border-[#6c7df3]/40 hover:bg-gray-50"
+                      isDragOver
+                        ? "border-[#6c7df3] bg-[#6c7df3]/10 scale-[1.02]"
+                        : file
+                          ? "border-[#6c7df3] bg-[#6c7df3]/5"
+                          : "border-gray-200 hover:border-[#6c7df3]/40 hover:bg-gray-50"
                     }`}
                   >
                     <input
@@ -381,7 +457,7 @@ export const CreateFlashcard = ({
                     {file ? (
                       <div className="flex items-center justify-center gap-3">
                         <FileText className="w-6 h-6 text-[#6c7df3]" />
-                        <span className="font-medium text-[#1a1a4b] text-sm truncate max-w-[300px]">
+                        <span className="font-medium text-[#1a1a4b] text-sm truncate max-w-75">
                           {file.name}
                         </span>
                         <span className="text-xs text-gray-400">
@@ -404,32 +480,36 @@ export const CreateFlashcard = ({
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
                       Max Cards
                     </label>
-                    <input
+                    <EditableInput
                       type="number"
                       min={1}
                       max={50}
                       value={cardLimit}
-                      onChange={(e) => setCardLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
-                      className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
+                      onChange={(e) =>
+                        setCardLimit(
+                          Math.max(1, Math.min(50, Number(e.target.value))),
+                        )
+                      }
+                      variant="default"
+                      isEditable={true}
+                      className="text-center px-4"
                     />
                   </div>
-                  <button
+                  <Button
                     onClick={handleGenerateFromFile}
                     disabled={!file || isGenerating}
-                    className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
+                    variant="primary"
+                    size="md"
+                    loading={isGenerating}
+                    icon={
+                      !isGenerating ? (
                         <Sparkles className="w-4 h-4" />
-                        Generate
-                      </>
-                    )}
-                  </button>
+                      ) : undefined
+                    }
+                    className="whitespace-nowrap active:scale-95"
+                  >
+                    {isGenerating ? "Processing..." : "Generate"}
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -438,7 +518,7 @@ export const CreateFlashcard = ({
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
                     Paste Your Text
                   </label>
-                  <textarea
+                  <EditableTextarea
                     value={inputText}
                     onChange={(e) => {
                       setInputText(e.target.value);
@@ -446,7 +526,9 @@ export const CreateFlashcard = ({
                     }}
                     placeholder="Paste or type the content you want to generate flashcards from..."
                     rows={5}
-                    className="w-full px-5 py-4 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] resize-none text-sm leading-relaxed"
+                    variant="default"
+                    isEditable={true}
+                    className="border-2 border-gray-200 text-sm leading-relaxed"
                   />
                 </div>
 
@@ -455,32 +537,36 @@ export const CreateFlashcard = ({
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block">
                       Max Cards
                     </label>
-                    <input
+                    <EditableInput
                       type="number"
                       min={1}
                       max={50}
                       value={cardLimit}
-                      onChange={(e) => setCardLimit(Math.max(1, Math.min(50, Number(e.target.value))))}
-                      className="w-full px-4 py-3.5 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-[#6c7df3]/20 focus:border-[#6c7df3] outline-none font-medium text-[#1a1a4b] shadow-sm text-center"
+                      onChange={(e) =>
+                        setCardLimit(
+                          Math.max(1, Math.min(50, Number(e.target.value))),
+                        )
+                      }
+                      variant="default"
+                      isEditable={true}
+                      className="text-center px-4"
                     />
                   </div>
-                  <button
+                  <Button
                     onClick={handleGenerateFromText}
                     disabled={!inputText.trim() || isGenerating}
-                    className="px-6 py-3.5 bg-[#6c7df3] text-white rounded-xl font-bold shadow-lg shadow-blue-900/10 hover:bg-[#5a6be0] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 whitespace-nowrap flex items-center gap-2"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
+                    variant="primary"
+                    size="md"
+                    loading={isGenerating}
+                    icon={
+                      !isGenerating ? (
                         <Sparkles className="w-4 h-4" />
-                        Generate
-                      </>
-                    )}
-                  </button>
+                      ) : undefined
+                    }
+                    className="whitespace-nowrap active:scale-95"
+                  >
+                    {isGenerating ? "Processing..." : "Generate"}
+                  </Button>
                 </div>
               </div>
             )}
@@ -548,17 +634,12 @@ export const CreateFlashcard = ({
           </div>
 
           {/* Add Button */}
-          <button
+          <CreateButton
+            label="Add Another Card"
+            icon={<Plus className="w-6 h-6" />}
             onClick={addCard}
-            className="w-full py-6 sm:py-12 rounded-4xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors">
-              <Plus className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-widest">
-              Add Another Card
-            </span>
-          </button>
+            variant="full"
+          />
         </div>
       </motion.div>
     </div>
