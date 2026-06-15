@@ -232,6 +232,11 @@ export default function App() {
     navigate("/create");
   };
 
+  const navigateToCreateWithProject = (projectId: string) => {
+    setEditingSet(null);
+    navigate("/create", { state: { defaultProjectId: projectId } });
+  };
+
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-[#fafbfc] flex items-center justify-center">
@@ -305,6 +310,7 @@ export default function App() {
                 setEditingSet(null);
                 navigate("/library");
               }}
+              defaultProjectId={location.state?.defaultProjectId}
             />
           }
         />
@@ -333,6 +339,7 @@ export default function App() {
                   project={authorizedProject}
                   sets={flashcardSets}
                   onOpenSet={handleOpenSet}
+                  onCreateSet={navigateToCreateWithProject}
                 />
               )}
             </ProtectedProjectRoute>

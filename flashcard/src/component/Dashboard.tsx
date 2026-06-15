@@ -15,6 +15,7 @@ import { SelectDropdown } from "./SelectDropdown";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Button } from "./Button";
+import { useNavigate } from "react-router-dom";
 
 export const Dashboard = ({
   user,
@@ -27,6 +28,7 @@ export const Dashboard = ({
   onOpenSet: (set: FlashcardSet) => void;
   onViewAll?: () => void;
 }) => {
+  const navigate = useNavigate();
   const { username, isLoading } = useUsername(user);
 
   // Goal States
@@ -295,8 +297,11 @@ export const Dashboard = ({
                 </p>
 
                 <Button
-                  onClick={() => activeGoalSet && onOpenSet(activeGoalSet)}
-                  disabled={!activeGoalSet}
+                  onClick={() =>
+                    activeGoalSet
+                      ? onOpenSet(activeGoalSet)
+                      : navigate("/create")
+                  }
                   variant="primary"
                   size="md"
                   className="w-max active:scale-95"

@@ -23,6 +23,7 @@ interface CreateFlashcardProps {
   projects: Project[];
   onSave: (set: FlashcardSet) => void;
   onDiscard: () => void;
+  defaultProjectId?: string;
 }
 
 export const CreateFlashcard = ({
@@ -30,11 +31,12 @@ export const CreateFlashcard = ({
   projects,
   onSave,
   onDiscard,
+  defaultProjectId,
 }: CreateFlashcardProps) => {
   const [title, setTitle] = useState(initialSet?.title || "");
   const [description, setDescription] = useState(initialSet?.description || "");
   const [selectedProjectId, setSelectedProjectId] = useState(
-    initialSet?.projectId || "",
+    initialSet?.projectId || defaultProjectId || "",
   );
   const [cards, setCards] = useState<Flashcard[]>(initialSet?.cards || []);
 

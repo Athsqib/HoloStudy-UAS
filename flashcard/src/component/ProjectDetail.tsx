@@ -1,18 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Folder } from "lucide-react";
+import { ArrowLeft, BookOpen, Folder, Plus } from "lucide-react";
 import type { Project, FlashcardSet } from "../types";
+import { CreateButton } from "./CreateButton";
 
 interface ProjectDetailProps {
   project: Project;
   sets: FlashcardSet[];
   onOpenSet: (set: FlashcardSet) => void;
+  onCreateSet: (projectId: string) => void;
 }
 
 export const ProjectDetail = ({
   project,
   sets,
   onOpenSet,
+  onCreateSet,
 }: ProjectDetailProps) => {
   const navigate = useNavigate();
 
@@ -46,7 +49,7 @@ export const ProjectDetail = ({
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-6 mb-12">
+          <div className="grid grid-cols-1 gap-6 mb-12">
             <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
               <div className="text-indigo-400 mb-2">
                 <BookOpen />
@@ -65,6 +68,11 @@ export const ProjectDetail = ({
             <h3 className="font-bold text-gray-400 uppercase tracking-widest text-xs mb-4">
               Included Sets
             </h3>
+            <CreateButton
+              label="Create New Set"
+              icon={<Plus className="w-6 h-6" />}
+              onClick={() => onCreateSet(project.id)}
+            />
             {projectSets.map((set) => (
               <div
                 key={set.id}

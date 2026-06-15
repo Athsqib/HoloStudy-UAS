@@ -20,18 +20,23 @@ export const CreateButton = ({
   return (
     <button
       onClick={onClick}
-      className={`rounded-4xl border-2 border-dashed flex items-center justify-center gap-4 text-gray-300 hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-white transition-all group cursor-pointer ${
+      className={`rounded-4xl border-2 border-dashed flex items-center justify-center gap-4 transition-all group cursor-pointer
+
+      text-[#6c7df3] md:text-gray-300
+      border-[#6c7df3]/30 md:border-gray-100
+      hover:border-[#6c7df3] hover:text-[#6c7df3] hover:bg-[#6c7df3]/5
+      ${
         isFull
-          ? "w-full py-6 sm:py-12 flex-col border-gray-200"
+          ? "w-full py-6 sm:py-12 flex-col"
           : viewMode === "grid"
-            ? "flex-col h-64 border-gray-100"
-            : "flex-row h-24 px-8 w-full justify-start border-gray-100"
+            ? "flex-col h-64"
+            : "flex-row h-24 px-8 w-full justify-start"
       }`}
     >
       <div
-        className={`rounded-full bg-gray-50 group-hover:bg-[#6c7df3]/10 flex items-center justify-center transition-colors shrink-0 ${
-          isFull ? "w-10 h-10" : "w-12 h-12"
-        }`}
+        className={`rounded-full flex items-center justify-center transition-colors shrink-0
+        bg-[#6c7df3]/10 md:bg-gray-50
+        ${isFull ? "w-10 h-10" : "w-12 h-12"}`}
       >
         {icon}
       </div>
