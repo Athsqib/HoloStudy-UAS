@@ -11,10 +11,10 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { CreateFlashcard } from "./CreateFlashcard";
+import { Button } from "./Button";
 import type { FlashcardSet, Project, FlexibleCard } from "../types";
 import { db, auth } from "../lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Button } from "./Button";
 
 interface SetDetailProps {
   set: FlashcardSet;
@@ -73,12 +73,21 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
         if (userSnap.exists()) {
           const data = userSnap.data();
-          const lastDateStr = data.lastStudyDate;
+          const lastDateStr = data.lastStudyDate || data.lastStreakDate;
 
-          // Only update if they haven't already studied today
-          if (lastDateStr !== todayStr) {
+          // Track cards studied per day
+          const prevCount =
+            data.cardsStudiedDate === todayStr ? data.cardsStudiedToday || 0 : 0;
+          const newCardsStudied = prevCount + set.cards.length;
+
+          // Only update streak if they haven't already studied today
+          if (lastDateStr && lastDateStr !== todayStr) {
             const todayDate = new Date(todayStr);
-            const lastDate = new Date(lastDateStr || "2000-01-01");
+            const lastDate = new Date(
+              typeof lastDateStr === "string"
+                ? lastDateStr
+                : lastDateStr?.toDate?.() || "2000-01-01",
+            );
             const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -96,6 +105,15 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               streakCount: newStreak,
               lastStudyDate: todayStr,
               lastWriteAt: new Date().toISOString(),
+              cardsStudiedToday: newCardsStudied,
+              cardsStudiedDate: todayStr,
+            });
+          } else {
+            // Same day — just update cards studied count
+            await updateDoc(userRef, {
+              lastWriteAt: new Date().toISOString(),
+              cardsStudiedToday: newCardsStudied,
+              cardsStudiedDate: todayStr,
             });
           }
         } else {
@@ -105,6 +123,8 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
             streakCount: 1,
             lastStudyDate: todayStr,
             lastWriteAt: new Date().toISOString(),
+            cardsStudiedToday: set.cards.length,
+            cardsStudiedDate: todayStr,
           });
         }
       }
@@ -215,7 +235,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
           <Button
             onClick={() => setIsEditing(true)}
-            variant="primary"
+            variant="secondary"
             size="sm"
             icon={<Edit3 className="w-4 h-4" />}
           >
@@ -268,6 +288,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               >
                 <ChevronLeft className="w-5 sm:w-6 h-5 sm:h-6" />
               </button>
+
               {isLastCard ? (
                 <Button
                   onClick={handleFinishSet}
@@ -300,16 +321,11 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
               Click Edit Set to add some flashcards!
             </p>
             <Button
-              onClick={handleFinishSet}
-              disabled={isFinishing}
+              onClick={() => setIsEditing(true)}
               variant="primary"
-              size="md"
-              rounded="full"
-              loading={isFinishing}
-              icon={<CheckCircle className="w-5 h-5" />}
-              className="h-12 sm:h-14 px-6 sm:px-8 active:scale-95"
+              size="sm"
             >
-              {isFinishing ? "Saving..." : "Finish Set"}
+              Add Cards
             </Button>
           </div>
         )}

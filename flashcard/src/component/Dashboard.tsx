@@ -12,10 +12,10 @@ import type { FlashcardSet, UserProfile } from "../types";
 import { useUsername } from "../hooks/useUsername";
 import type { User } from "firebase/auth";
 import { SelectDropdown } from "./SelectDropdown";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { Button } from "./Button";
 import { useNavigate } from "react-router-dom";
+import { Button } from "./Button";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 export const Dashboard = ({
   user,
@@ -33,11 +33,17 @@ export const Dashboard = ({
 
   // Goal States
   const [goalSetId, setGoalSetId] = useState<string>("");
-  const [dailyTarget, setDailyTarget] = useState<number>(15);
+  const [dailyTarget, setDailyTarget] = useState<number>(0);
   const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+  const [cardsStudiedToday, setCardsStudiedToday] = useState<number>(0);
 
   // Determine the active goal set (defaults to the first set if none is explicitly chosen)
   const activeGoalSet = sets.find((s) => s.id === goalSetId) || sets[0];
+
+  const progressPercent =
+    dailyTarget > 0
+      ? Math.min(Math.round((cardsStudiedToday / dailyTarget) * 100), 100)
+      : 0;
 
   // State to hold streak data based on UserProfile type
   const [currentStreak, setCurrentStreak] = useState<number>(0);
@@ -71,11 +77,19 @@ export const Dashboard = ({
           // Default to 0 if streakCount doesn't exist
           setCurrentStreak(userData.streakCount || 0);
 
+          // Read goal data from Firestore
+          if (userData.dailyTarget != null)
+            setDailyTarget(userData.dailyTarget);
+          if (userData.goalSetId) setGoalSetId(userData.goalSetId);
+          setCardsStudiedToday(userData.cardsStudiedToday ?? 0);
+
           let completed = false;
 
           // FIX: Look for 'lastStudyDate' (which SetDetail saves)
-          // Fallback to 'lastStreakDate' just in case old accounts use it
-          const savedDate = userData.lastStudyDate || userData.lastStreakDate;
+          // Fallback to 'lastStreakDate' for backward compatibility with old accounts
+          const savedDate =
+            userData.lastStudyDate ||
+            (userSnap.data() as Record<string, unknown>).lastStreakDate;
 
           if (savedDate) {
             try {
@@ -232,26 +246,61 @@ export const Dashboard = ({
 
                     {/* Editable Daily Target */}
                     {isEditingTarget ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white px-3 py-1 rounded-2xl border border-indigo-200 shadow-sm">
-                        <input
-                          type="number"
-                          min="1"
-                          value={dailyTarget}
-                          onChange={(e) =>
-                            setDailyTarget(Number(e.target.value))
-                          }
-                          className="w-12 outline-none font-bold text-[#4d51a3] text-xs bg-transparent"
-                          autoFocus
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && setIsEditingTarget(false)
-                          }
-                        />
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                          cards/day
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-indigo-200 shadow-sm">
+                          <input
+                            type="number"
+                            min="1"
+                            value={dailyTarget || ""}
+                            onChange={(e) =>
+                              setDailyTarget(
+                                e.target.value === ""
+                                  ? 0
+                                  : Number(e.target.value),
+                              )
+                            }
+                            className="w-14 outline-none font-bold text-[#4d51a3] text-xs bg-transparent"
+                            autoFocus
+                            onKeyDown={async (e) => {
+                              if (e.key === "Enter") {
+                                setIsEditingTarget(false);
+                                if (user?.uid && dailyTarget > 0) {
+                                  try {
+                                    await updateDoc(
+                                      doc(db, "users", user.uid),
+                                      { dailyTarget: dailyTarget },
+                                    );
+                                  } catch (err) {
+                                    console.error(
+                                      "Failed to save daily target:",
+                                      err,
+                                    );
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            cards/day
+                          </span>
+                        </div>
                         <button
-                          onClick={() => setIsEditingTarget(false)}
-                          className="ml-1 text-green-500 hover:text-green-600 transition-colors"
+                          onClick={async () => {
+                            setIsEditingTarget(false);
+                            if (user?.uid && dailyTarget > 0) {
+                              try {
+                                await updateDoc(doc(db, "users", user.uid), {
+                                  dailyTarget: dailyTarget,
+                                });
+                              } catch (err) {
+                                console.error(
+                                  "Failed to save daily target:",
+                                  err,
+                                );
+                              }
+                            }
+                          }}
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors shrink-0"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>
@@ -263,7 +312,9 @@ export const Dashboard = ({
                       >
                         <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#4d51a3] bg-white px-3 py-1 rounded-full border border-indigo-100 shadow-sm transition-colors group-hover/target:border-indigo-300">
                           <Target className="w-3.5 h-3.5" />
-                          Target: {dailyTarget} cards/day
+                          {dailyTarget > 0
+                            ? `Target: ${dailyTarget} cards/day`
+                            : "Set target"}
                         </span>
                         <button className="opacity-0 group-hover/target:opacity-100 transition-opacity p-1 text-gray-400 hover:text-[#656799]">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -277,7 +328,18 @@ export const Dashboard = ({
                     <SelectDropdown
                       options={dropdownOptions}
                       value={activeGoalSet?.id || ""}
-                      onChange={(newId) => setGoalSetId(newId)}
+                      onChange={async (newId) => {
+                        setGoalSetId(newId);
+                        if (user?.uid) {
+                          try {
+                            await updateDoc(doc(db, "users", user.uid), {
+                              goalSetId: newId,
+                            });
+                          } catch (err) {
+                            console.error("Failed to save goal set:", err);
+                          }
+                        }
+                      }}
                       placeholder="Select Goal"
                       className="w-full sm:w-55"
                     />
@@ -290,11 +352,36 @@ export const Dashboard = ({
                     : "Set Your Daily Goal"}
                 </h3>
 
-                <p className="text-gray-500 font-medium max-w-90 mb-8 leading-relaxed line-clamp-3">
+                <p className="text-gray-500 font-medium max-w-90 mb-4 leading-relaxed line-clamp-3">
                   {activeGoalSet
                     ? `Keep reviewing this set to hit your goal of ${dailyTarget} cards today.`
                     : "Create your first flashcard set to start setting and tracking your learning goals!"}
                 </p>
+
+                {activeGoalSet && dailyTarget > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-[#4d51a3] uppercase tracking-wider">
+                        Today's Progress
+                      </span>
+                      <span className="text-xs font-bold text-[#4d51a3]">
+                        {cardsStudiedToday} / {dailyTarget}
+                        {progressPercent >= 100 && " ✅"}
+                      </span>
+                    </div>
+                    <div className="h-3 w-full rounded-full overflow-hidden bg-[#d0d5f2] border border-[#c5c8f2] p-0.5">
+                      <div
+                        className="h-full rounded-full transition-all duration-700 ease-out bg-linear-to-r from-[#6c7df3] to-[#4d51a3]"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    {progressPercent >= 100 && (
+                      <p className="text-xs font-bold text-green-600 mt-1.5">
+                        Goal Complete! Great work!
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <Button
                   onClick={() =>
@@ -438,7 +525,7 @@ export const Dashboard = ({
               </div>
             ) : (
               <div className="h-48 rounded-[40px] border-2 border-dashed border-gray-100 flex items-center justify-center bg-[#fafbfc]">
-                <p className="text-gray-300 font-medium italic p-3">
+                <p className="text-gray-300 font-medium italic">
                   No sets found. Create your first one to see it here!
                 </p>
               </div>

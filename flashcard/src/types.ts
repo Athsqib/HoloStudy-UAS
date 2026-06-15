@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface Flashcard {
   id: string;
   front: string;
@@ -36,7 +34,9 @@ export type FlexibleCard = {
 export interface UserProfile {
   userId: string;
   streakCount: number;
-  lastStreakDate?: Timestamp;
   lastStudyDate?: string;
-  hasCompletedToday?: boolean;
+  dailyTarget?: number;
+  goalSetId?: string;
+  cardsStudiedToday?: number;
+  cardsStudiedDate?: string;
 }

@@ -14,9 +14,9 @@ import type { Flashcard, FlashcardSet, Project } from "../types";
 import { EditableInput } from "./EditableInput";
 import { EditableTextarea } from "./EditableTextarea";
 import { SelectDropdown } from "./SelectDropdown";
-import jsPDF from "jspdf";
 import { CreateButton } from "./CreateButton";
 import { Button } from "./Button";
+import jsPDF from "jspdf";
 
 interface CreateFlashcardProps {
   initialSet?: FlashcardSet | null;
@@ -42,11 +42,11 @@ export const CreateFlashcard = ({
 
   const [inputMode, setInputMode] = useState<"file" | "text">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [cardLimit, setCardLimit] = useState(10);
-  const [isDragOver, setIsDragOver] = useState(false);
 
   const BACKEND_URL =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
@@ -356,7 +356,7 @@ export const CreateFlashcard = ({
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                Project Folder (Optional)
+                Project Folder
               </label>
               <div className="h-13.5 flex items-stretch">
                 <SelectDropdown

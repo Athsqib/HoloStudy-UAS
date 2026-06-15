@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, Folder, Book, FilePlus } from "lucide-react";
+import { Menu, Folder, Book, FilePlus, House } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface SidebarItemProps {
@@ -81,6 +81,12 @@ export const Sidebar = ({
       </div>
 
       <div className="flex-1 w-full flex flex-row md:flex-col items-center justify-center md:justify-start h-full">
+        <SidebarItem
+          icon={House}
+          label="Home"
+          active={activeTab === "dashboard"}
+          onClick={() => onTabChange("dashboard")}
+        />
         <SidebarItem
           icon={Folder}
           label="Projects"
