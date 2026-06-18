@@ -7,8 +7,7 @@ from flask_cors import CORS
 from gabungan import read_file, generate_flashcards
 
 app = Flask(__name__)
-CORS(app)
-
+CORS(app, origins=["http://localhost:5173", "https://holostudy-uas.firebaseapp.com", "https://flashcard-82cda.web.app"])
 
 @app.route("/generate", methods=["POST"])
 def generate():
