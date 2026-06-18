@@ -6,7 +6,9 @@ import nltk
 from pypdf import PdfReader
 
 nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
 nltk.download("stopwords", quiet=True)
+
 
 try:
     rake = Rake(language="indonesian")

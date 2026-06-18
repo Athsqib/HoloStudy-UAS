@@ -35,7 +35,10 @@ def generate():
         if not text.strip():
             return jsonify({"error": "Could not extract text from the file"}), 400
 
-        flashcards = generate_flashcards(text, limit=limit)
+        try:
+            flashcards = generate_flashcards(text, limit=limit)
+        except Exception as e:
+            return jsonify({"error": f"Generation failed: {str(e)}"}), 500
 
         return jsonify({
             "success": True,
@@ -56,7 +59,10 @@ def generate_text():
         return jsonify({"error": "Text is too short (min 10 characters)"}), 400
 
     limit = data.get("limit", 10)
-    flashcards = generate_flashcards(text, limit=limit)
+    try:
+        flashcards = generate_flashcards(text, limit=limit)
+    except Exception as e:
+        return jsonify({"error": f"Generation failed: {str(e)}"}), 500
 
     return jsonify({
         "success": True,
