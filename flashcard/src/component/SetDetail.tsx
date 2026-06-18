@@ -77,7 +77,9 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
 
           // Track cards studied per day
           const prevCount =
-            data.cardsStudiedDate === todayStr ? data.cardsStudiedToday || 0 : 0;
+            data.cardsStudiedDate === todayStr
+              ? data.cardsStudiedToday || 0
+              : 0;
           const newCardsStudied = prevCount + set.cards.length;
 
           // Only update streak if they haven't already studied today
@@ -139,7 +141,7 @@ export const SetDetail = ({ set, projects, onSave }: SetDetailProps) => {
     } finally {
       setIsFinishing(false);
     }
-  }, [set.id, navigate]);
+  }, [set.id, set.cards.length, navigate]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

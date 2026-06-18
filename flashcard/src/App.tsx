@@ -32,6 +32,7 @@ import { ProtectedProjectRoute } from "./component/ProtectedProjectRoute";
 import { ProjectDetail } from "./component/ProjectDetail";
 import { ConfirmModal } from "./component/ConfirmModal";
 import { Footer } from "./component/Footer";
+import { useInactivityTimeout } from "./hooks/useInactivityTimeout";
 
 export default function App() {
   const navigate = useNavigate();
@@ -192,6 +193,9 @@ export default function App() {
       console.error("Error during sign out:", error);
     }
   };
+
+  // Auto-logout after 1 hour of inactivity
+  useInactivityTimeout(handleLogout, 3_600_000, !!user);
 
   const handleOpenSet = (set: FlashcardSet) => {
     navigate(`/set/${set.id}`);

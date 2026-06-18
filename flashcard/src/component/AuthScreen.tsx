@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "./Button";
 import { EditableInput } from "./EditableInput";
+import { ConfirmModal } from "./ConfirmModal";
 
 export const AuthScreen = () => {
   const [error, setError] = useState("");
@@ -39,6 +40,7 @@ export const AuthScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetMessage, setResetMessage] = useState("");
+  const [showGuestWarning, setShowGuestWarning] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -69,6 +71,10 @@ export const AuthScreen = () => {
   };
 
   const handleGuestSignIn = async () => {
+    setShowGuestWarning(true);
+  };
+
+  const confirmGuestSignIn = async () => {
     try {
       setIsLoading(true);
       setError("");
@@ -394,6 +400,18 @@ export const AuthScreen = () => {
           >
             Continue as Guest
           </Button>
+          <ConfirmModal
+            isOpen={showGuestWarning}
+            title="Guest Mode Notice"
+            message="Guest sessions are automatically logged out after 1 hour of inactivity. Any unsaved data will be lost. Sign up with an email to keep your data permanently."
+            onConfirm={() => {
+              setShowGuestWarning(false);
+              confirmGuestSignIn();
+            }}
+            onCancel={() => setShowGuestWarning(false)}
+            confirmText="Continue as Guest"
+            cancelText="Sign Up Instead"
+          />
         </div>
       </motion.div>
     </div>
